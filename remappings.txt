@@ -1,2 +1,4 @@
 @openzeppelin/contracts/=node_modules/@openzeppelin/contracts/
+@openzeppelin-contracts-upgradeable/contracts/=node_modules/@openzeppelin/contracts-upgradeable/
+
 forge-std/=node_modules/forge-std/
