@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity >=0.8.25;
 
 import "@openzeppelin-contracts-upgradeable/contracts/governance/GovernorUpgradeable.sol";
 import "@openzeppelin-contracts-upgradeable/contracts/governance/extensions/GovernorSettingsUpgradeable.sol";
