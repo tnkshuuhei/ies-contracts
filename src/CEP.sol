@@ -27,6 +27,11 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     function initialize(address _owner, address _treasury) public initializer {
         __Ownable_init(_owner);
         __AccessControl_init();
