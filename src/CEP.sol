@@ -70,14 +70,13 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
     function _createEvaluationPool(
         bytes32 _profileId,
-        Evaluation _evaluation,
         address _token,
         uint256 _amount,
         Metadata memory _metadata,
         address[] memory _contributors
     )
         external
-        returns (uint256 poolId)
+        returns (uint256 poolId, Evaluation evaluation)
     {
         poolId = ++evaluationCount;
         bytes32 POOL_MANAGER_ROLE = bytes32(poolId);
@@ -85,9 +84,13 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
         _grantRole(POOL_MANAGER_ROLE, msg.sender);
 
+        evaluation = _createEvaluation(_profileId, _contributors);
+
+        if (address(evaluation) == address(0)) revert ZERO_ADDRESS();
+
         EvaluationPool memory pool = EvaluationPool({
             profileId: _profileId,
-            evaluation: _evaluation,
+            evaluation: evaluation,
             token: _token,
             amount: _amount,
             metadata: _metadata,
@@ -98,9 +101,9 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
         _setRoleAdmin(POOL_CONTRIBUTOR_ROLE, POOL_MANAGER_ROLE);
 
-        _evaluation.initialize(poolId);
+        evaluation.initialize(poolId);
 
-        if (_evaluation.getPoolId() != poolId || address(_evaluation.getCep()) != address(this)) revert MISMATCH();
+        if (evaluation.getPoolId() != poolId || address(evaluation.getCep()) != address(this)) revert MISMATCH();
 
         for (uint256 i = 0; i < _contributors.length; i++) {
             address contributor = _contributors[i];
@@ -110,7 +113,9 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
             _grantRole(POOL_CONTRIBUTOR_ROLE, contributor);
         }
 
-        return poolId;
+        emit EvaluationCreated(poolId, address(evaluation));
+
+        return (poolId, evaluation);
     }
 
     function _createEvaluation(
@@ -118,10 +123,12 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         address[] memory _contributors
     )
         internal
-        returns (address evaluationAddress)
+        returns (Evaluation evaluationAddress)
     {
         evaluationCount++;
         bytes memory bytecode = type(Evaluation).creationCode;
+        bytecode = abi.encodePacked(bytecode, abi.encode(address(this)));
+
         bytes32 salt = keccak256(abi.encodePacked(_profileId, _contributors, evaluationCount));
         assembly {
             evaluationAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
