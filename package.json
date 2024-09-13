@@ -6,12 +6,8 @@
     "name": "tnkshuuhei",
     "url": "https://github.com/tnkshuuhei"
   },
-  "dependencies": {
-    "@openzeppelin/contracts": "^5.0.1",
-    "@openzeppelin/contracts-upgradeable": "^5.0.2"
-  },
+
   "devDependencies": {
-    "forge-std": "github:foundry-rs/forge-std#v1.8.1",
     "prettier": "^3.0.0",
     "solhint": "^3.6.2"
   },
@@ -34,6 +30,9 @@
     "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
     "test": "forge test",
     "test:coverage": "forge coverage",
-    "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage"
+    "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage",
+    "deploy:governor": "forge script script/DeployCEPGovernor.s.sol --rpc-url optimism  --broadcast --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify",
+    "deploy:veToken": "forge script script/DeployveCEP.s.sol --rpc-url optimism  --broadcast --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify",
+    "deploy:tlc": "forge script script/DeployTLC.s.sol --rpc-url optimism  --broadcast --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify"
   }
 }
