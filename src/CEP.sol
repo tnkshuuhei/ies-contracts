@@ -7,8 +7,11 @@ import "@openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeab
 import "@openzeppelin-contracts-upgradeable/contracts/access/AccessControlUpgradeable.sol";
 import "@openzeppelin-contracts-upgradeable/contracts/utils/ReentrancyGuardUpgradeable.sol";
 
+import "./CEPGovernor.sol";
+import "./veCEP.sol";
 import "./Evaluation.sol";
 import "./libraries/Errors.sol";
+import "./libraries/Metadata.sol";
 
 // Comprehensive Evaluation Protocol
 contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, Errors {
@@ -16,7 +19,19 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
     address payable public treasury;
 
-    mapping(uint256 => address) public evaluations;
+    CEPGovernor public governor;
+    VotingCEPToken public voteToken;
+
+    struct EvaluationPool {
+        bytes32 profileId;
+        Evaluation evaluation;
+        address token;
+        uint256 amount;
+        Metadata metadata;
+        address[] contributors;
+    }
+
+    mapping(uint256 => EvaluationPool) public evaluations;
 
     event EvaluationCreated(uint256 indexed id, address indexed evaluation);
 
@@ -32,14 +47,87 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         _disableInitializers();
     }
 
-    function initialize(address _owner, address _treasury) public initializer {
+    function initialize(
+        address _owner,
+        address _treasury,
+        CEPGovernor _gonernor,
+        VotingCEPToken _token
+    )
+        public
+        initializer
+    {
         __Ownable_init(_owner);
         __AccessControl_init();
         __ReentrancyGuard_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
-        treasury = payable(_treasury);
+        _updateTreasury(payable(_treasury));
+
+        governor = _gonernor;
+        voteToken = _token;
+    }
+
+    function _createEvaluationPool(
+        bytes32 _profileId,
+        Evaluation _evaluation,
+        address _token,
+        uint256 _amount,
+        Metadata memory _metadata,
+        address[] memory _contributors
+    )
+        external
+        returns (uint256 poolId)
+    {
+        poolId = ++evaluationCount;
+        bytes32 POOL_MANAGER_ROLE = bytes32(poolId);
+        bytes32 POOL_CONTRIBUTOR_ROLE = keccak256(abi.encodePacked(poolId, "contributor"));
+
+        _grantRole(POOL_MANAGER_ROLE, msg.sender);
+
+        EvaluationPool memory pool = EvaluationPool({
+            profileId: _profileId,
+            evaluation: _evaluation,
+            token: _token,
+            amount: _amount,
+            metadata: _metadata,
+            contributors: _contributors
+        });
+
+        evaluations[poolId] = pool;
+
+        _setRoleAdmin(POOL_CONTRIBUTOR_ROLE, POOL_MANAGER_ROLE);
+
+        _evaluation.initialize(poolId);
+
+        if (_evaluation.getPoolId() != poolId || address(_evaluation.getCep()) != address(this)) revert MISMATCH();
+
+        for (uint256 i = 0; i < _contributors.length; i++) {
+            address contributor = _contributors[i];
+
+            if (contributor == address(0)) revert ZERO_ADDRESS();
+
+            _grantRole(POOL_CONTRIBUTOR_ROLE, contributor);
+        }
+
+        return poolId;
+    }
+
+    function _createEvaluation(
+        bytes32 _profileId,
+        address[] memory _contributors
+    )
+        internal
+        returns (address evaluationAddress)
+    {
+        evaluationCount++;
+        bytes memory bytecode = type(Evaluation).creationCode;
+        bytes32 salt = keccak256(abi.encodePacked(_profileId, _contributors, evaluationCount));
+        assembly {
+            evaluationAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
+        }
+
+        return evaluationAddress;
     }
 
     function _checkAdmin() internal view {
