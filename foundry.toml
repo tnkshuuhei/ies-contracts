@@ -2,7 +2,7 @@
 
 [profile.default]
 auto_detect_solc = false
-block_timestamp = 1_680_220_800 # March 31, 2023 at 00:00 GMT
+block_timestamp = 1_680_220_800  # March 31, 2023 at 00:00 GMT
 bytecode_hash = "none"
 evm_version = "shanghai"
 fuzz = { runs = 1_000 }
@@ -11,9 +11,13 @@ optimizer = true
 optimizer_runs = 10_000
 out = "out"
 script = "script"
-solc = "0.8.25"
+solc = "0.8.24"
 src = "src"
 test = "test"
+ffi = true
+ast = true
+build_info = true
+extra_output = ["storageLayout"]
 
 [profile.ci]
 fuzz = { runs = 10_000 }

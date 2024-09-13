@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
-pragma solidity >=0.8.25 <0.9.0;
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity >=0.8.20;
 
-import { Script } from "forge-std/src/Script.sol";
+import { Script } from "forge-std/Script.sol";
 
 abstract contract BaseScript is Script {
+    address admin = 0xc3593524E2744E547f013E17E6b0776Bc27Fc614;
+
     /// @dev Included to enable compilation of the script without a $MNEMONIC environment variable.
     string internal constant TEST_MNEMONIC = "test test test test test test test test test test test junk";
 
@@ -29,7 +31,7 @@ abstract contract BaseScript is Script {
             broadcaster = from;
         } else {
             mnemonic = vm.envOr({ name: "MNEMONIC", defaultValue: TEST_MNEMONIC });
-            (broadcaster,) = deriveRememberKey({ mnemonic: mnemonic, index: 0 });
+            (broadcaster,) = deriveRememberKey({ mnemonic: mnemonic, index: 2 });
         }
     }
 

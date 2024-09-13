@@ -31,8 +31,8 @@
     "test": "forge test",
     "test:coverage": "forge coverage",
     "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage",
-    "deploy:governor": "forge script script/DeployCEPGovernor.s.sol --rpc-url optimism  --broadcast --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify",
-    "deploy:veToken": "forge script script/DeployveCEP.s.sol --rpc-url optimism  --broadcast --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify",
-    "deploy:tlc": "forge script script/DeployTLC.s.sol --rpc-url optimism  --broadcast --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify"
+    "deploy:governor": "forge script script/DeployCEPGovernor.s.sol --rpc-url optimism  --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify",
+    "deploy:veToken": "forge script script/DeployveCEP.s.sol --rpc-url optimism  --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify",
+    "deploy:tlc": "forge script script/DeployTLC.s.sol --rpc-url optimism  --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify"
   }
 }
