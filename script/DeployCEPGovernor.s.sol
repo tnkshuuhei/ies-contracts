@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.20;
+pragma solidity >=0.8.25;
 
 import "forge-std/console.sol";
-import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Script } from "forge-std/Script.sol";
 import "../src/CEPGovernor.sol";
 
@@ -13,16 +12,9 @@ contract DeployCEPGovernor is Script {
     function run() public {
         vm.startBroadcast();
         address token = 0xFD48e7f4c8EE34109607bb1EB1A6779A21884A03;
-        TimelockControllerUpgradeable tlc =
-            TimelockControllerUpgradeable(payable(0x7d5F0FCf8Fff3f8F2fA7Ee6F3FfF3FFF3fFf3FFf));
 
-        address proxy = Upgrades.deployTransparentProxy(
-            "CEPGovernor.sol",
-            admin,
-            abi.encodeCall(CEPGovernor.initialize, (IVotes(token), TimelockControllerUpgradeable(tlc)))
-        );
-        CEPGovernor governor = CEPGovernor(payable(proxy));
-        console.log("Deployed proxy at:", proxy);
+        CEPGovernor governor = CEPGovernor(payable(token));
+
         console.log("Deployed CEPGovernor at:", address(governor));
         vm.stopBroadcast();
     }
