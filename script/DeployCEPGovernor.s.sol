@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
-import "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 import { Script } from "forge-std/Script.sol";
-import "../src/CEPGovernor.sol";
+import { CEPGovernor } from "../src/CEPGovernor.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract DeployCEPGovernor is Script {
-    address admin = 0xc3593524E2744E547f013E17E6b0776Bc27Fc614;
+    address public admin = 0xc3593524E2744E547f013E17E6b0776Bc27Fc614;
 
     function run() public {
         vm.startBroadcast();

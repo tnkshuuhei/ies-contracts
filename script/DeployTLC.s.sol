@@ -7,8 +7,8 @@ import { BaseScript } from "./Base.s.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract DeployTLC is BaseScript {
-    address[] proposers = [admin];
-    address[] executors = [admin];
+    address[] public proposers = [admin];
+    address[] public executors = [admin];
 
     function run() public broadcast returns (TLC tlc) {
         // tlc = new TLC(1 days, proposers, executors, admin);
