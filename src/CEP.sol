@@ -37,6 +37,8 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
     event TreasuryUpdated(address treasury);
 
+    event PoolFunded(uint256 indexed id, uint256 amount);
+
     modifier onlyAdmin() {
         _checkAdmin();
         _;
@@ -137,6 +139,21 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         }
 
         return evaluationAddress;
+    }
+
+    function fundPool(uint256 _poolId, uint256 _amount) external payable {
+        if (_amount == 0 || _amount != msg.value) revert INVALID();
+        _fundPool();
+
+        emit PoolFunded(_poolId, _amount);
+    }
+
+    function _fundPool() internal pure {
+        // TODO: implement the fundPool function
+    }
+
+    function updateTreasury(address payable _treasury) external onlyAdmin {
+        _updateTreasury(_treasury);
     }
 
     function _checkAdmin() internal view {
