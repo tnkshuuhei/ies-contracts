@@ -153,7 +153,7 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
     {
         evaluationCount++;
         bytes memory bytecode = type(Evaluation).creationCode;
-        bytecode = abi.encodePacked(bytecode, abi.encode(address(this)));
+        bytecode = abi.encodePacked(bytecode, abi.encode(address(this), _contributors));
 
         bytes32 salt = keccak256(abi.encodePacked(_profileId, _contributors, evaluationCount));
         assembly {
