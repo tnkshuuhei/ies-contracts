@@ -7,20 +7,30 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
+import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
+import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
+import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
+
 import "./CEPGovernor.sol";
 import "./veCEP.sol";
 import "./Evaluation.sol";
 import "./libraries/Errors.sol";
 import "./libraries/Metadata.sol";
+import "./AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
 contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, Errors {
     uint256 public evaluationCount;
 
     address payable public treasury;
+    bytes32 public schemaUID;
 
     CEPGovernor public governor;
     VotingCEPToken public voteToken;
+
+    IEAS public eas;
+    AttesterResolver public resolver;
 
     struct EvaluationPool {
         bytes32 profileId;
@@ -53,7 +63,9 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         address _owner,
         address _treasury,
         CEPGovernor _gonernor,
-        VotingCEPToken _token
+        VotingCEPToken _token,
+        IEAS _eas,
+        ISchemaRegistry _schemaRegistry
     )
         public
         initializer
@@ -68,6 +80,17 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
         governor = _gonernor;
         voteToken = _token;
+
+        resolver = new AttesterResolver(_eas, address(this));
+
+        // TODO: define proper schema
+        bytes32 _schemaUID = _schemaRegistry.register(
+            "bytes32 profileId, address[] contributors, string proposal, string metadataUID, address proposer",
+            ISchemaResolver(address(resolver)),
+            true
+        );
+
+        schemaUID = _schemaUID;
     }
 
     function createEvaluationPool(

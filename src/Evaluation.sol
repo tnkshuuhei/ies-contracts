@@ -2,6 +2,8 @@
 pragma solidity >=0.8.25;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
+import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 
 import "./libraries/Errors.sol";
 import { CEP } from "./CEP.sol";
