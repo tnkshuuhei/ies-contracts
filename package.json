@@ -6,7 +6,6 @@
     "name": "tnkshuuhei",
     "url": "https://github.com/tnkshuuhei"
   },
-
   "devDependencies": {
     "prettier": "^3.0.0",
     "solhint": "^3.6.2"
