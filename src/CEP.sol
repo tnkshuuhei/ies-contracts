@@ -70,7 +70,7 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         voteToken = _token;
     }
 
-    function _createEvaluationPool(
+    function createEvaluationPool(
         bytes32 _profileId,
         address _token,
         uint256 _amount,
@@ -78,6 +78,20 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         address[] memory _contributors
     )
         external
+    {
+        (uint256 poolId, Evaluation evaluation) =
+            _createEvaluationPool(_profileId, _token, _amount, _metadata, _contributors);
+        emit EvaluationCreated(poolId, address(evaluation));
+    }
+
+    function _createEvaluationPool(
+        bytes32 _profileId,
+        address _token,
+        uint256 _amount,
+        Metadata memory _metadata,
+        address[] memory _contributors
+    )
+        internal
         returns (uint256 poolId, Evaluation evaluation)
     {
         poolId = ++evaluationCount;
@@ -117,9 +131,17 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
             _grantRole(POOL_CONTRIBUTOR_ROLE, contributor);
         }
 
-        emit EvaluationCreated(poolId, address(evaluation));
-
         return (poolId, evaluation);
+    }
+
+    function createEvaluation(
+        bytes32 _profileId,
+        address[] memory _contributors
+    )
+        external
+        returns (Evaluation evaluationAddress)
+    {
+        return _createEvaluation(_profileId, _contributors);
     }
 
     function _createEvaluation(
