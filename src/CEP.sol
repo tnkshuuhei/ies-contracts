@@ -197,6 +197,36 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         // TODO: implement the fundPool function
     }
 
+    /// @dev create a new attestation
+    /// @param profileId The unique identifier of the profile
+    /// @param contributors The addresses of the contributors
+    /// @param proposal The proposal of the attestation
+    /// @param metadataUID The unique identifier of the metadata
+    /// @return attestationUID The unique identifier of the attestation
+    function _attest(
+        bytes32 profileId,
+        address[] memory contributors,
+        string memory proposal,
+        string memory metadataUID,
+        address proposer
+    )
+        internal
+        returns (bytes32 attestationUID)
+    {
+        // "bytes32 profileId, address[] contributors, string proposal, string metadataUID, address proposer"
+        bytes memory data = abi.encode(profileId, contributors, proposal, metadataUID, proposer);
+        AttestationRequestData memory requestData = AttestationRequestData({
+            recipient: proposer,
+            expirationTime: 0,
+            revocable: true,
+            refUID: 0x0,
+            data: data,
+            value: 0
+        });
+        AttestationRequest memory request = AttestationRequest({ schema: schemaUID, data: requestData });
+        attestationUID = eas.attest(request);
+    }
+
     function updateTreasury(address payable _treasury) external onlyAdmin {
         _updateTreasury(_treasury);
     }
