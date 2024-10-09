@@ -3,7 +3,7 @@ pragma solidity >=0.8.25;
 
 import { console } from "forge-std/console.sol";
 import { Script } from "forge-std/Script.sol";
-import { CEPGovernor } from "../src/CEPGovernor.sol";
+import { CEPGovernor } from "../src/gov/CEPGovernor.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract DeployCEPGovernor is Script {

@@ -12,8 +12,8 @@ import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 
-import "./CEPGovernor.sol";
-import "./veCEP.sol";
+import "./gov/CEPGovernor.sol";
+import "./gov/veCEP.sol";
 import "./Evaluation.sol";
 import "./libraries/Errors.sol";
 import "./libraries/Metadata.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
-import { VotingCEPToken } from "../src/veCEP.sol";
+import { VotingCEPToken } from "../src/gov/veCEP.sol";
 
 import { BaseScript } from "./Base.s.sol";
 
