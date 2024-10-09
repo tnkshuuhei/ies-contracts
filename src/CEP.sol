@@ -17,7 +17,7 @@ import "./gov/veCEP.sol";
 import "./Evaluation.sol";
 import "./libraries/Errors.sol";
 import "./libraries/Metadata.sol";
-import "./AttesterResolver.sol";
+import "./eas/AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
 contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, Errors {
