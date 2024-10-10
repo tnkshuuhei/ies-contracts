@@ -93,7 +93,7 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         schemaUID = _schemaUID;
     }
 
-    function createEvaluationPool(
+    function createEvaluationWithPool(
         bytes32 _profileId,
         address _token,
         uint256 _amount,
@@ -103,11 +103,13 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         external
     {
         (uint256 poolId, Evaluation evaluation) =
-            _createEvaluationPool(_profileId, _token, _amount, _metadata, _contributors);
+            _createEvaluationWithPool(_profileId, _token, _amount, _metadata, _contributors);
         emit EvaluationCreated(poolId, address(evaluation));
     }
 
-    function _createEvaluationPool(
+    /// @dev deploy a new evaluation contract with create2 and initialize it
+    /// @dev create a new evaluation pool struct and store it in the evaluations mapping
+    function _createEvaluationWithPool(
         bytes32 _profileId,
         address _token,
         uint256 _amount,
@@ -155,16 +157,6 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         }
 
         return (poolId, evaluation);
-    }
-
-    function createEvaluation(
-        bytes32 _profileId,
-        address[] memory _contributors
-    )
-        external
-        returns (Evaluation evaluationAddress)
-    {
-        return _createEvaluation(_profileId, _contributors);
     }
 
     function _createEvaluation(
