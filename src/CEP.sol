@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
@@ -20,7 +18,7 @@ import "./libraries/Metadata.sol";
 import "./eas/AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
-contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, Errors {
+contract CEP is AccessControl, ReentrancyGuard, Errors {
     uint256 public evaluationCount;
 
     address payable public treasury;
@@ -55,26 +53,14 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
         _;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
-    function initialize(
+    constructor(
         address _owner,
         address _treasury,
         CEPGovernor _gonernor,
         VotingCEPToken _token,
         IEAS _eas,
         ISchemaRegistry _schemaRegistry
-    )
-        public
-        initializer
-    {
-        __Ownable_init(_owner);
-        __AccessControl_init();
-        __ReentrancyGuard_init();
-
+    ) {
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
         _updateTreasury(payable(_treasury));
