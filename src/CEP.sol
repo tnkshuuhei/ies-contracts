@@ -3,7 +3,6 @@ pragma solidity >=0.8.25;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
@@ -18,7 +17,7 @@ import "./libraries/Metadata.sol";
 import "./eas/AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
-contract CEP is AccessControl, ReentrancyGuard, Errors {
+contract CEP is AccessControl, Errors {
     uint256 public evaluationCount;
 
     address payable public treasury;
