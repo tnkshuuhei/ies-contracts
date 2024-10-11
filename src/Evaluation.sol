@@ -2,6 +2,7 @@
 pragma solidity >=0.8.25;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/governance/IGovernor.sol";
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 
@@ -12,6 +13,7 @@ contract Evaluation is AccessControl, Errors {
     CEP public cep;
 
     uint256 public poolId;
+    address public governor;
 
     address[] public contributors;
 
@@ -24,11 +26,31 @@ contract Evaluation is AccessControl, Errors {
         for (uint256 i = 0; i < _contributors.length; i++) {
             _grantRole(CONTRIBUTOR_ROLE, _contributors[i]);
         }
+        governor = address(cep.governor());
     }
 
     modifier onlyCep() {
         _checkCep();
         _;
+    }
+
+    ///@param _contributors array of contributor addresses
+    ///@param targets array of the target contract addresses
+    ///@param values array of values to be handled by the proposal
+    ///@param calldatas array of calldatas to be handled by the proposal
+    ///@param description string description of the proposal
+    function proposeImpactReport(
+        address[] calldata _contributors,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        string memory description
+    )
+        external
+        onlyCep
+    {
+        // create proposal on Governor contract
+        IGovernor(governor).propose(targets, values, calldatas, description);
     }
 
     // TODO: implement the initialize function
