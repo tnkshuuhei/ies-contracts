@@ -80,17 +80,78 @@ contract CEP is AccessControl, ReentrancyGuard, Errors {
         schemaUID = _schemaUID;
     }
 
+    // TODO: implement the function to create Impact report
+    function createReport(
+        address _evaluation,
+        address[] calldata _contributors,
+        string memory _description,
+        uint256 _amount,
+        address _proposor
+    )
+        external
+    {
+        if (_proposor != msg.sender) revert UNAUTHORIZED();
+        if (_proposor == address(0)) revert ZERO_ADDRESS();
+        if (_contributors.length == 0) revert INVALID();
+        if (_amount == 0) revert INVALID();
+
+        Evaluation evaluation = Evaluation(_evaluation);
+        EvaluationPool memory pool = evaluations[evaluation.getPoolId()];
+
+        // check if the msg.sender is the owner of the evaluation contract
+        evaluation.checkOwner(msg.sender);
+
+        // transfer the amount to the evaluation contract
+        ERC20 token = ERC20(pool.token);
+        // need approval from the msg.sender to this contract
+        // TODO: decide whitch token should be used for deposit
+        // TODO: decide how many token should be deposited, should be the pre-defined amount or the amount that is
+        // passed as an argument
+        token.transferFrom(msg.sender, address(evaluation), _amount);
+
+        // create array of calldatas, targets, and values
+        bytes[] memory calldatas;
+        address[] memory targets;
+        uint256[] memory values;
+
+        // calldata1: send back the token from evaluation contract to the owner address
+        calldatas[0] =
+            abi.encodeWithSignature("transferFrom(address,address,uint256)", address(evaluation), _proposor, _amount);
+
+        // calldata2: attest the proposal with the contributors
+        calldatas[1] = abi.encodeWithSignature(
+            "attest(bytes32,address[],string,string,address)",
+            pool.profileId,
+            _contributors,
+            _description,
+            pool.metadata.pointer,
+            _proposor
+        );
+
+        // target1: token address
+        targets[0] = address(token);
+        // target2: address(this)
+        targets[1] = address(this);
+
+        values[0] = 0;
+        values[1] = 0;
+
+        // call the proposeImpactReport() on Evaluation
+        evaluation.proposeImpactReport(_contributors, targets, values, calldatas, _description);
+    }
+
     function createEvaluationWithPool(
         bytes32 _profileId,
         address _token,
         uint256 _amount,
         Metadata memory _metadata,
+        address _owner,
         address[] memory _contributors
     )
         external
     {
         (uint256 poolId, Evaluation evaluation) =
-            _createEvaluationWithPool(_profileId, _token, _amount, _metadata, _contributors);
+            _createEvaluationWithPool(_profileId, _token, _amount, _metadata, _owner, _contributors);
         emit EvaluationCreated(poolId, address(evaluation));
     }
 
@@ -101,6 +162,7 @@ contract CEP is AccessControl, ReentrancyGuard, Errors {
         address _token,
         uint256 _amount,
         Metadata memory _metadata,
+        address _owner,
         address[] memory _contributors
     )
         internal
@@ -112,7 +174,7 @@ contract CEP is AccessControl, ReentrancyGuard, Errors {
 
         _grantRole(POOL_MANAGER_ROLE, msg.sender);
 
-        evaluation = _createEvaluation(_profileId, _contributors);
+        evaluation = _createEvaluation(_profileId, _owner, _contributors);
 
         if (address(evaluation) == address(0)) revert ZERO_ADDRESS();
 
@@ -148,6 +210,7 @@ contract CEP is AccessControl, ReentrancyGuard, Errors {
 
     function _createEvaluation(
         bytes32 _profileId,
+        address _owner,
         address[] memory _contributors
     )
         internal
@@ -155,9 +218,9 @@ contract CEP is AccessControl, ReentrancyGuard, Errors {
     {
         evaluationCount++;
         bytes memory bytecode = type(Evaluation).creationCode;
-        bytecode = abi.encodePacked(bytecode, abi.encode(address(this), _contributors));
+        bytecode = abi.encodePacked(bytecode, abi.encode(address(this), _owner, _contributors));
 
-        bytes32 salt = keccak256(abi.encodePacked(_profileId, _contributors, evaluationCount));
+        bytes32 salt = keccak256(abi.encodePacked(_profileId, _owner, _contributors, evaluationCount));
         assembly {
             evaluationAddress := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
@@ -174,6 +237,18 @@ contract CEP is AccessControl, ReentrancyGuard, Errors {
 
     function _fundPool() internal pure {
         // TODO: implement the fundPool function
+    }
+
+    function attest(
+        bytes32 profileId,
+        address[] memory contributors,
+        string memory proposal,
+        string memory metadataUID
+    )
+        external
+        returns (bytes32 attestationUID)
+    {
+        attestationUID = _attest(profileId, contributors, proposal, metadataUID, msg.sender);
     }
 
     /// @dev create a new attestation

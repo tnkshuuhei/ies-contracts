@@ -14,12 +14,15 @@ contract Evaluation is AccessControl, Errors {
 
     uint256 public poolId;
     address public governor;
+    address public owner;
 
     address[] public contributors;
 
     bytes32 public CONTRIBUTOR_ROLE = keccak256("CONTRIBUTOR_ROLE");
 
-    constructor(address _cepAddress, address[] memory _contributors) {
+    event ImpactReportCreated(address[] contributors, uint256 proposalId);
+
+    constructor(address _cepAddress, address _owner, address[] memory _contributors) {
         cep = CEP(_cepAddress);
         contributors = _contributors;
 
@@ -27,6 +30,7 @@ contract Evaluation is AccessControl, Errors {
             _grantRole(CONTRIBUTOR_ROLE, _contributors[i]);
         }
         governor = address(cep.governor());
+        owner = _owner;
     }
 
     modifier onlyCep() {
@@ -48,9 +52,14 @@ contract Evaluation is AccessControl, Errors {
     )
         external
         onlyCep
+        returns (uint256)
     {
         // create proposal on Governor contract
-        IGovernor(governor).propose(targets, values, calldatas, description);
+        uint256 proposalId = IGovernor(governor).propose(targets, values, calldatas, description);
+
+        // TODO: emit event
+        emit ImpactReportCreated(_contributors, proposalId);
+        return proposalId;
     }
 
     // TODO: implement the initialize function
@@ -79,6 +88,18 @@ contract Evaluation is AccessControl, Errors {
 
     function _checkContributor(address _contributor) internal view returns (bool) {
         if (!hasRole(CONTRIBUTOR_ROLE, _contributor)) {
+            revert UNAUTHORIZED();
+        } else {
+            return true;
+        }
+    }
+
+    function checkOwner(address caller) external view returns (bool) {
+        return _checkOwner(caller);
+    }
+
+    function _checkOwner(address caller) internal view returns (bool) {
+        if (caller != owner) {
             revert UNAUTHORIZED();
         } else {
             return true;
