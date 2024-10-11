@@ -107,7 +107,7 @@ contract CEP is AccessControl, ReentrancyGuard, Errors {
         // TODO: decide whitch token should be used for deposit
         // TODO: decide how many token should be deposited, should be the pre-defined amount or the amount that is
         // passed as an argument
-        token.transferFrom(msg.sender, address(evaluation), _amount);
+        require(token.transferFrom(msg.sender, address(evaluation), _amount), "Token transfer failed");
 
         // create array of calldatas, targets, and values
         bytes[] memory calldatas;
