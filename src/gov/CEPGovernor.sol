@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
-import "@openzeppelin/contracts/governance/Governor.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
-import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+import { IGovernor, Governor } from "@openzeppelin/contracts/governance/Governor.sol";
+import { GovernorCountingSimple } from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
+import { GovernorVotes } from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
+import { GovernorVotesQuorumFraction } from
+    "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
+import { GovernorTimelockControl } from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 
 contract CEPGovernor is
     Governor,
@@ -23,7 +27,7 @@ contract CEPGovernor is
         GovernorVotesQuorumFraction(4)
         GovernorTimelockControl(_timelock)
     { }
-		
+
     function votingDelay() public pure override returns (uint256) {
         return 1 days;
     }
