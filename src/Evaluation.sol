@@ -31,10 +31,11 @@ contract Evaluation is AccessControl, Errors {
         }
         governor = address(cep.governor());
         owner = _owner;
+        _grantRole(DEFAULT_ADMIN_ROLE, _owner);
     }
 
     modifier onlyCep() {
-        _checkCep();
+        require(_checkCep() == true, UNAUTHORIZED());
         _;
     }
 
@@ -77,10 +78,9 @@ contract Evaluation is AccessControl, Errors {
         return poolId;
     }
 
-    function _checkCep() internal view {
-        if (msg.sender != address(cep)) {
-            revert UNAUTHORIZED();
-        }
+    function _checkCep() internal view returns (bool) {
+        require(msg.sender == address(cep), UNAUTHORIZED());
+        return true;
     }
 
     function checkContributor(address _contributor) external view returns (bool isContributor) {
@@ -89,11 +89,8 @@ contract Evaluation is AccessControl, Errors {
     }
 
     function _checkContributor(address _contributor) internal view returns (bool) {
-        if (!hasRole(CONTRIBUTOR_ROLE, _contributor)) {
-            revert UNAUTHORIZED();
-        } else {
-            return true;
-        }
+        require(hasRole(CONTRIBUTOR_ROLE, _contributor), UNAUTHORIZED());
+        return true;
     }
 
     function checkOwner(address caller) external view returns (bool) {
@@ -101,10 +98,7 @@ contract Evaluation is AccessControl, Errors {
     }
 
     function _checkOwner(address caller) internal view returns (bool) {
-        if (caller != owner) {
-            revert UNAUTHORIZED();
-        } else {
-            return true;
-        }
+        require(hasRole(DEFAULT_ADMIN_ROLE, caller), UNAUTHORIZED());
+        return true;
     }
 }

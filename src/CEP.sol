@@ -89,10 +89,10 @@ contract CEP is AccessControl, Errors {
     )
         external
     {
-        if (_proposor != msg.sender) revert UNAUTHORIZED();
-        if (_proposor == address(0)) revert ZERO_ADDRESS();
-        if (_contributors.length == 0) revert INVALID();
-        if (_amount == 0) revert INVALID();
+        require(_proposor == msg.sender, UNAUTHORIZED());
+        require(_proposor != address(0), ZERO_ADDRESS());
+        require(_contributors.length > 0, INVALID());
+        require(_amount > 0, INVALID());
 
         Evaluation evaluation = Evaluation(_evaluation);
         EvaluationPool memory pool = evaluations[evaluation.getPoolId()];
@@ -175,7 +175,7 @@ contract CEP is AccessControl, Errors {
 
         evaluation = _createEvaluation(_profileId, _owner, _contributors);
 
-        if (address(evaluation) == address(0)) revert ZERO_ADDRESS();
+        require(address(evaluation) != address(0), ZERO_ADDRESS());
 
         EvaluationPool memory pool = EvaluationPool({
             profileId: _profileId,
@@ -190,16 +190,17 @@ contract CEP is AccessControl, Errors {
 
         _setRoleAdmin(POOL_CONTRIBUTOR_ROLE, POOL_MANAGER_ROLE);
 
-        if (evaluation.getPoolId() != 0) revert ALREADY_INITIALIZED();
+        require(evaluation.getPoolId() == 0, ALREADY_INITIALIZED());
 
         evaluation.initialize(poolId);
 
-        if (evaluation.getPoolId() != poolId || address(evaluation.getCep()) != address(this)) revert MISMATCH();
+        require(evaluation.getPoolId() == poolId, MISMATCH());
+        require(address(evaluation.getCep()) == address(this), MISMATCH());
 
         for (uint256 i = 0; i < _contributors.length; i++) {
             address contributor = _contributors[i];
 
-            if (contributor == address(0)) revert ZERO_ADDRESS();
+            require(contributor != address(0), ZERO_ADDRESS());
 
             _grantRole(POOL_CONTRIBUTOR_ROLE, contributor);
         }
@@ -225,17 +226,6 @@ contract CEP is AccessControl, Errors {
         }
 
         return evaluationAddress;
-    }
-
-    function fundPool(uint256 _poolId, uint256 _amount) external payable {
-        if (_amount == 0 || _amount != msg.value) revert INVALID();
-        _fundPool();
-
-        emit PoolFunded(_poolId, _amount);
-    }
-
-    function _fundPool() internal pure {
-        // TODO: implement the fundPool function
     }
 
     function attest(

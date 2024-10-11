@@ -23,7 +23,7 @@ contract ProjectRegistry is Initializable, AccessControlUpgradeable, Errors {
 
     function initialize(address _owner) external initializer {
         // Make sure the owner is not 'address(0)'
-        if (_owner == address(0)) revert ZERO_ADDRESS();
+        require(_owner != address(0), ZERO_ADDRESS());
         // Grant the role to the owner
         _grantRole(CEP_OWNER, _owner);
     }
@@ -42,7 +42,7 @@ contract ProjectRegistry is Initializable, AccessControlUpgradeable, Errors {
         bytes32 profileId = _generateProfileId(_nonce, _owner);
 
         // Make sure the owner is not the zero address
-        if (_owner == address(0)) revert ZERO_ADDRESS();
+        require(_owner != address(0), ZERO_ADDRESS());
 
         // Create a new Profile instance, also generates the anchor address
         Profile memory profile =
@@ -54,15 +54,13 @@ contract ProjectRegistry is Initializable, AccessControlUpgradeable, Errors {
         uint256 memberLength = _members.length;
 
         // Only profile owner can add members
-        if (memberLength > 0 && _owner != msg.sender) {
-            revert UNAUTHORIZED();
-        }
+        require(memberLength > 0 && _owner == msg.sender, UNAUTHORIZED());
 
         for (uint256 i; i < memberLength;) {
             address member = _members[i];
 
             // Will revert if any of the addresses are a zero address
-            if (member == address(0)) revert ZERO_ADDRESS();
+            require(member != address(0), ZERO_ADDRESS());
 
             // Grant the role to the member and emit the event for each member
             _grantRole(profileId, member);
