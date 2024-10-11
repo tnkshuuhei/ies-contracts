@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
-import "@openzeppelin/contracts-upgradeable/governance/TimelockControllerUpgradeable.sol";
+import "@openzeppelin/contracts/governance/TimelockController.sol";
 
-contract TLC is TimelockControllerUpgradeable {
-// constructor(uint256 minDelay, address[] memory proposers, address[] memory executors, address admin) {
-//     __TimelockController_init(minDelay, proposers, executors, admin);
-// }
+// https://docs.openzeppelin.com/defender/guide/timelock-roles
+contract Timelock is TimelockController {
+    constructor(
+        uint256 minDelay,
+        address[] memory proposers,
+        address[] memory executors
+    )
+        TimelockController(minDelay, proposers, executors, msg.sender)
+    { }
 }

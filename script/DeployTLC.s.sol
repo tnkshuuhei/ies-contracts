@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
-import { TLC } from "../src/TLC.sol";
+import "../src/TLC.sol";
 
 import { BaseScript } from "./Base.s.sol";
 
@@ -10,8 +10,7 @@ contract DeployTLC is BaseScript {
     address[] public proposers = [admin];
     address[] public executors = [admin];
 
-    function run() public broadcast returns (TLC tlc) {
-        // tlc = new TLC(1 days, proposers, executors, admin);
-        tlc = new TLC();
+    function run() public broadcast returns (Timelock tlc) {
+        tlc = new Timelock(1 days, proposers, executors);
     }
 }

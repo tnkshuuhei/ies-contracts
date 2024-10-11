@@ -6,27 +6,11 @@ import { GovernorCountingSimple } from "@openzeppelin/contracts/governance/exten
 import { GovernorVotes } from "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import { GovernorVotesQuorumFraction } from
     "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
-import { GovernorTimelockControl } from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
-import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
 import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 
-contract CEPGovernor is
-    Governor,
-    GovernorCountingSimple,
-    GovernorVotes,
-    GovernorVotesQuorumFraction,
-    GovernorTimelockControl
-{
-    constructor(
-        IVotes _token,
-        TimelockController _timelock
-    )
-        Governor("CEP Governor")
-        GovernorVotes(_token)
-        GovernorVotesQuorumFraction(4)
-        GovernorTimelockControl(_timelock)
-    { }
+contract CEPGovernor is Governor, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
+    constructor(IVotes _token) Governor("CEP Governor") GovernorVotes(_token) GovernorVotesQuorumFraction(4) { }
 
     function votingDelay() public pure override returns (uint256) {
         return 1 days;
@@ -47,21 +31,11 @@ contract CEPGovernor is
         return super.quorum(blockNumber);
     }
 
-    function state(uint256 proposalId)
-        public
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (ProposalState)
-    {
+    function state(uint256 proposalId) public view override(Governor) returns (ProposalState) {
         return super.state(proposalId);
     }
 
-    function proposalNeedsQueuing(uint256 proposalId)
-        public
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (bool)
-    {
+    function proposalNeedsQueuing(uint256 proposalId) public view override(Governor) returns (bool) {
         return super.proposalNeedsQueuing(proposalId);
     }
 
@@ -73,7 +47,7 @@ contract CEPGovernor is
         bytes32 descriptionHash
     )
         internal
-        override(Governor, GovernorTimelockControl)
+        override(Governor)
         returns (uint48)
     {
         return super._queueOperations(proposalId, targets, values, calldatas, descriptionHash);
@@ -87,7 +61,7 @@ contract CEPGovernor is
         bytes32 descriptionHash
     )
         internal
-        override(Governor, GovernorTimelockControl)
+        override(Governor)
     {
         super._executeOperations(proposalId, targets, values, calldatas, descriptionHash);
     }
@@ -99,13 +73,13 @@ contract CEPGovernor is
         bytes32 descriptionHash
     )
         internal
-        override(Governor, GovernorTimelockControl)
+        override(Governor)
         returns (uint256)
     {
         return super._cancel(targets, values, calldatas, descriptionHash);
     }
 
-    function _executor() internal view override(Governor, GovernorTimelockControl) returns (address) {
+    function _executor() internal view override(Governor) returns (address) {
         return super._executor();
     }
 }
