@@ -34,13 +34,14 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
     struct EvaluationPool {
         bytes32 profileId;
-        Evaluation evaluation;
+        address evaluation;
         address token;
         uint256 amount;
         Metadata metadata;
         address[] contributors;
     }
 
+    // poolId => EvaluationPool
     mapping(uint256 => EvaluationPool) public evaluations;
 
     event EvaluationCreated(uint256 indexed id, address indexed evaluation);
@@ -131,7 +132,7 @@ contract CEP is Initializable, OwnableUpgradeable, AccessControlUpgradeable, Ree
 
         EvaluationPool memory pool = EvaluationPool({
             profileId: _profileId,
-            evaluation: evaluation,
+            evaluation: address(evaluation),
             token: _token,
             amount: _amount,
             metadata: _metadata,
