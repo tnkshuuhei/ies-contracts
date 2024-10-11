@@ -55,7 +55,9 @@ contract Evaluation is AccessControl, Errors {
         returns (uint256)
     {
         // create proposal on Governor contract
-        uint256 proposalId = IGovernor(governor).propose(targets, values, calldatas, description);
+        uint256 proposalId = IGovernor(governor).propose(
+            targets, values, calldatas, string(abi.encodePacked("[Impact Report]", description))
+        );
 
         // TODO: emit event
         emit ImpactReportCreated(_contributors, proposalId);
