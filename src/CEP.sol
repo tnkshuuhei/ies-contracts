@@ -8,6 +8,7 @@ import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "e
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
+import { IHats } from "hats-contracts/interfaces/IHats.sol";
 
 import "./gov/CEPGovernor.sol";
 import "./gov/veCEP.sol";
@@ -18,16 +19,16 @@ import "./eas/AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
 contract CEP is AccessControl, Errors {
-    uint256 public evaluationCount;
-
     address payable public treasury;
+    uint256 public topHatId;
+    uint256 public evaluationCount;
     bytes32 public schemaUID;
 
     CEPGovernor public governor;
     VotingCEPToken public voteToken;
-
     IEAS public eas;
     AttesterResolver public resolver;
+    IHats public hats;
 
     struct EvaluationPool {
         bytes32 profileId;
@@ -40,6 +41,15 @@ contract CEP is AccessControl, Errors {
 
     // poolId => EvaluationPool
     mapping(uint256 => EvaluationPool) public evaluations;
+
+    event Initialized(
+        address indexed owner,
+        address indexed treasury,
+        address indexed governor,
+        address token,
+        bytes32 schemaUID,
+        uint256 topHatId
+    );
 
     event EvaluationCreated(uint256 indexed id, address indexed evaluation);
 
@@ -58,7 +68,8 @@ contract CEP is AccessControl, Errors {
         CEPGovernor _gonernor,
         VotingCEPToken _token,
         IEAS _eas,
-        ISchemaRegistry _schemaRegistry
+        ISchemaRegistry _schemaRegistry,
+        IHats _hats
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
@@ -77,6 +88,17 @@ contract CEP is AccessControl, Errors {
         );
 
         schemaUID = _schemaUID;
+        hats = _hats;
+
+        // mint topHat
+        uint256 hatId = _hats.mintTopHat(
+            address(this), // target: Tophat's wearer address. The address that will be granted the hat.
+            "Impact Evaluation DAO", // name
+            "imageURL" // TODO: add the default image URL
+        );
+        topHatId = hatId;
+
+        emit Initialized(_owner, _treasury, address(_gonernor), address(_token), _schemaUID, hatId);
     }
 
     // TODO: implement the function to create Impact report
