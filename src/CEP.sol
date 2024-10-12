@@ -101,6 +101,70 @@ contract CEP is AccessControl, Errors {
         emit Initialized(_owner, _treasury, address(_gonernor), address(_token), _schemaUID, hatId);
     }
 
+    mapping(bytes32 => Profile) public profilesById;
+
+    struct Profile {
+        bytes32 id;
+        uint256 nonce;
+        string name;
+        Metadata metadata;
+        address owner;
+    }
+
+    event ProfileCreated(bytes32 indexed id, uint256 nonce, string name, Metadata metadata, address owner);
+
+    function createProfile(
+        uint256 _nonce,
+        string memory _name,
+        Metadata memory _metadata,
+        address _owner,
+        address[] memory _members
+    )
+        external
+        returns (bytes32)
+    {
+        // Generate a profile ID using a nonce and the msg.sender
+        bytes32 profileId = _generateProfileId(_nonce, _owner);
+
+        // Make sure the owner is not the zero address
+        require(_owner != address(0), ZERO_ADDRESS());
+
+        // Create a new Profile instance, also generates the anchor address
+        Profile memory profile =
+            Profile({ id: profileId, nonce: _nonce, name: _name, metadata: _metadata, owner: _owner });
+
+        profilesById[profileId] = profile;
+
+        // Assign roles for the profile members
+        uint256 memberLength = _members.length;
+
+        // Only profile owner can add members
+        require(memberLength > 0 && _owner == msg.sender, UNAUTHORIZED());
+
+        for (uint256 i; i < memberLength;) {
+            address member = _members[i];
+
+            // Will revert if any of the addresses are a zero address
+            require(member != address(0), ZERO_ADDRESS());
+
+            // Grant the role to the member and emit the event for each member
+            _grantRole(profileId, member);
+            unchecked {
+                ++i;
+            }
+        }
+
+        // Emit the event that the profile was created
+        emit ProfileCreated(profileId, profile.nonce, profile.name, profile.metadata, profile.owner);
+
+        // Return the profile ID
+        return profileId;
+    }
+
+    function _generateProfileId(uint256 _nonce, address _owner) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_nonce, _owner));
+    }
+
     // TODO: implement the function to create Impact report
     function createReport(
         address _evaluation,
