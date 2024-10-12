@@ -19,6 +19,13 @@ import "./eas/AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
 contract CEP is AccessControl, Errors {
+    // Constants
+    bytes32 private constant POOL_MANAGER_ROLE_PREFIX = "POOL_MANAGER_ROLE_";
+    bytes32 private constant POOL_CONTRIBUTOR_ROLE_PREFIX = "POOL_CONTRIBUTOR_ROLE_";
+    string private constant DEFAULT_TOP_HAT_NAME = "Impact Evaluation DAO";
+    string private constant REPORT_HAT_PREFIX = "[Impact Report] #";
+
+    // State variables
     address payable public treasury;
     uint256 public topHatId;
     uint256 public evaluationCount;
@@ -30,6 +37,7 @@ contract CEP is AccessControl, Errors {
     AttesterResolver public resolver;
     IHats public hats;
 
+    // Structs
     struct EvaluationPool {
         bytes32 profileId;
         uint256 projectHatId;
@@ -48,14 +56,13 @@ contract CEP is AccessControl, Errors {
         address owner;
         string imageURL;
     }
-    // poolId => EvaluationPool
 
+    // Mappings
     mapping(uint256 => EvaluationPool) public evaluations;
-
     mapping(uint256 => Profile) public profilesById;
 
+    // Events
     event ImpactReportCreated(uint256 indexed projectHatId, uint256 indexed reportHatId, uint256 indexed proposalId);
-
     event Initialized(
         address indexed owner,
         address indexed treasury,
@@ -64,15 +71,12 @@ contract CEP is AccessControl, Errors {
         bytes32 schemaUID,
         uint256 topHatId
     );
-
     event EvaluationCreated(uint256 indexed id, address indexed evaluation);
-
     event TreasuryUpdated(address treasury);
-
     event PoolFunded(uint256 indexed id, uint256 amount);
-
     event ProfileCreated(bytes32 indexed id, uint256 hatId, string name, Metadata metadata, address owner);
 
+    // Modifiers
     modifier onlyAdmin() {
         _checkAdmin();
         _;
