@@ -18,6 +18,7 @@ ffi = true
 ast = true
 build_info = true
 extra_output = ["storageLayout"]
+viaIR = true
 
 [profile.ci]
 fuzz = { runs = 10_000 }

@@ -53,10 +53,10 @@ contract Evaluation is AccessControl, Errors {
     )
         external
         onlyCep
-        returns (uint256)
+        returns (uint256 proposalId)
     {
         // create proposal on Governor contract
-        uint256 proposalId = IGovernor(governor).propose(
+        proposalId = IGovernor(governor).propose(
             targets, values, calldatas, string(abi.encodePacked("[Impact Report]", description))
         );
 

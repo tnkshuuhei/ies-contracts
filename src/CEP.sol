@@ -32,6 +32,7 @@ contract CEP is AccessControl, Errors {
 
     struct EvaluationPool {
         bytes32 profileId;
+        uint256 projectHatId;
         address evaluation;
         address token;
         uint256 amount;
@@ -51,7 +52,9 @@ contract CEP is AccessControl, Errors {
 
     mapping(uint256 => EvaluationPool) public evaluations;
 
-    mapping(bytes32 => Profile) public profilesById;
+    mapping(uint256 => Profile) public profilesById;
+
+    event ImpactReportCreated(uint256 indexed projectHatId, uint256 indexed reportHatId, uint256 indexed proposalId);
 
     event Initialized(
         address indexed owner,
@@ -155,7 +158,7 @@ contract CEP is AccessControl, Errors {
         });
 
         // store the profile in the profilesById mapping
-        profilesById[profileId] = profile;
+        profilesById[hatId] = profile;
 
         // Emit the event that the profile was created
         emit ProfileCreated(profileId, hatId, _name, _metadata, _owner);
@@ -164,22 +167,43 @@ contract CEP is AccessControl, Errors {
         return profileId;
     }
 
-    // TODO: implement the function to create Impact report
+    // TODO: create new hat for each report
+    // TODO: create a new role hat
     function createReport(
-        address _evaluation,
+        uint256 _hatId, // the hatId of the project that the report is created for
         address[] calldata _contributors,
         string memory _description,
-        uint256 _amount,
-        address _proposor
+        string memory _imageURL,
+        uint256 _amount, // amount of token to be deposited
+        address _proposor // the address of the proposor
     )
         external
     {
         require(_proposor == msg.sender, UNAUTHORIZED());
         require(_proposor != address(0), ZERO_ADDRESS());
+        require(_proposor == profilesById[_hatId].owner, UNAUTHORIZED());
         require(_contributors.length > 0, INVALID());
         require(_amount > 0, INVALID());
 
-        Evaluation evaluation = Evaluation(_evaluation);
+        Profile memory profile = profilesById[_hatId];
+
+        // create a new hat for the report
+        uint256 reportHatsId = hats.createHat(
+            _hatId,
+            string(abi.encodePacked("[Impact Report] #", block.timestamp)),
+            1,
+            address(0),
+            address(0),
+            true,
+            _imageURL
+        );
+
+        (, Evaluation evaluation) =
+            _createEvaluationWithPool(profile.id, reportHatsId, _amount, profile.metadata, _proposor, _contributors);
+
+        // mint the hat to the evaluation contract
+        hats.mintHat(reportHatsId, address(evaluation));
+
         EvaluationPool memory pool = evaluations[evaluation.getPoolId()];
 
         // check if the msg.sender is the owner of the evaluation contract
@@ -221,29 +245,16 @@ contract CEP is AccessControl, Errors {
         values[1] = 0;
 
         // call the proposeImpactReport() on Evaluation
-        evaluation.proposeImpactReport(_contributors, targets, values, calldatas, _description);
-    }
+        uint256 proposalId = evaluation.proposeImpactReport(_contributors, targets, values, calldatas, _description);
 
-    function createEvaluationWithPool(
-        bytes32 _profileId,
-        address _token,
-        uint256 _amount,
-        Metadata memory _metadata,
-        address _owner,
-        address[] memory _contributors
-    )
-        external
-    {
-        (uint256 poolId, Evaluation evaluation) =
-            _createEvaluationWithPool(_profileId, _token, _amount, _metadata, _owner, _contributors);
-        emit EvaluationCreated(poolId, address(evaluation));
+        emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
     }
 
     /// @dev deploy a new evaluation contract with create2 and initialize it
     /// @dev create a new evaluation pool struct and store it in the evaluations mapping
     function _createEvaluationWithPool(
         bytes32 _profileId,
-        address _token,
+        uint256 _hatId,
         uint256 _amount,
         Metadata memory _metadata,
         address _owner,
@@ -264,8 +275,9 @@ contract CEP is AccessControl, Errors {
 
         EvaluationPool memory pool = EvaluationPool({
             profileId: _profileId,
+            projectHatId: _hatId,
             evaluation: address(evaluation),
-            token: _token,
+            token: address(voteToken),
             amount: _amount,
             metadata: _metadata,
             contributors: _contributors
