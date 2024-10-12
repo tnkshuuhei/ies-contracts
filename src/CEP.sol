@@ -391,6 +391,8 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         emit TreasuryUpdated(_treasury);
     }
 
+    // below functions are required by IERC1155Receiver
+    ///@inheritdoc IERC1155Receiver
     function onERC1155Received(
         address operator,
         address from,
@@ -406,6 +408,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         return this.onERC1155Received.selector;
     }
 
+    ///@inheritdoc IERC1155Receiver
     function onERC1155BatchReceived(
         address operator,
         address from,
