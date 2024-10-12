@@ -3,6 +3,7 @@ pragma solidity >=0.8.25;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
@@ -18,7 +19,7 @@ import "./libraries/Metadata.sol";
 import "./eas/AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
-contract CEP is AccessControl, Errors {
+contract CEP is AccessControl, Errors, IERC1155Receiver {
     // Constants
     bytes32 private constant POOL_MANAGER_ROLE_PREFIX = "POOL_MANAGER_ROLE_";
     bytes32 private constant POOL_CONTRIBUTOR_ROLE_PREFIX = "POOL_CONTRIBUTOR_ROLE_";
@@ -388,5 +389,35 @@ contract CEP is AccessControl, Errors {
 
         treasury = _treasury;
         emit TreasuryUpdated(_treasury);
+    }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    )
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return this.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    )
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return this.onERC1155BatchReceived.selector;
     }
 }

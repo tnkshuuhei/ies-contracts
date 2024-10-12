@@ -3,13 +3,14 @@ pragma solidity >=0.8.25;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/governance/IGovernor.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 
 import "./libraries/Errors.sol";
 import { CEP } from "./CEP.sol";
 
-contract Evaluation is AccessControl, Errors {
+contract Evaluation is AccessControl, Errors, IERC1155Receiver {
     CEP public cep;
 
     uint256 public poolId;
@@ -100,5 +101,35 @@ contract Evaluation is AccessControl, Errors {
     function _checkOwner(address caller) internal view returns (bool) {
         require(hasRole(DEFAULT_ADMIN_ROLE, caller), UNAUTHORIZED());
         return true;
+    }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    )
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return this.onERC1155Received.selector;
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    )
+        external
+        pure
+        override
+        returns (bytes4)
+    {
+        return this.onERC1155BatchReceived.selector;
     }
 }
