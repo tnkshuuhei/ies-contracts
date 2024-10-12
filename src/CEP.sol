@@ -75,7 +75,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     event EvaluationCreated(uint256 indexed id, address indexed evaluation);
     event TreasuryUpdated(address treasury);
     event PoolFunded(uint256 indexed id, uint256 amount);
-    event ProfileCreated(bytes32 indexed id, uint256 hatId, string name, Metadata metadata, address owner);
+    event ProfileCreated(bytes32 indexed id, uint256 hatId, string name, string metadata, address owner);
 
     // Modifiers
     modifier onlyAdmin() {
@@ -125,7 +125,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     function registerProject(
         string memory _name,
         string memory _imageURL,
-        Metadata memory _metadata,
+        Metadata memory _metadata, // data : { name: "Project Name", description: "Project description" }
         address _owner,
         uint256 _parentHatId
     )
@@ -138,7 +138,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         // create a new hat for the project, that represents the project itself
         uint256 hatId = hats.createHat(
             _parentHatId,
-            _name, // should be the project name
+            _metadata.pointer, // should be the project name
             1, // Max supply is 1 for the project
             0x0000000000000000000000000000000000004A75, // eligibility module address on sepolia
             0x0000000000000000000000000000000000004A75, // toggle module address on sepolia
@@ -166,7 +166,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         profilesById[hatId] = profile;
 
         // Emit the event that the profile was created
-        emit ProfileCreated(profileId, hatId, _name, _metadata, _owner);
+        emit ProfileCreated(profileId, hatId, _name, _metadata.pointer, _owner);
 
         // Return the profile ID
         return profileId;
