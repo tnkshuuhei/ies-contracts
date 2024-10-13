@@ -95,6 +95,18 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         _;
     }
 
+    /**
+     * @dev Initializes the CEP contract
+     * @param _owner
+     * @param _treasury
+     * @param _gonernor
+     * @param _token
+     * @param _eas
+     * @param _schemaRegistry
+     * @param _hats
+     * @param _hypercerts
+     * @param _imageURL
+     */
     constructor(
         address _owner,
         address _treasury,
@@ -137,7 +149,16 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         emit Initialized(_owner, _treasury, address(_gonernor), address(_token), _schemaUID, hatId);
     }
 
+    /////////////////////////////////// EXTERNAL FUNCTIONS //////////////////////////////////////
+
     // TODO: get tokenId from the hypercerts contract and store it
+    /**
+     * @dev Create hypercerts
+     * @param account
+     * @param units
+     * @param _uri
+     * @param _restrictions
+     */
     function createHypercerts(
         address account,
         uint256 units,
@@ -151,17 +172,15 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         // TODO: make this claimable
     }
 
-    function _createHypercerts(
-        address account,
-        uint256 units,
-        string memory _uri,
-        TransferRestrictions _restrictions
-    )
-        internal
-    {
-        hypercert.mintClaim(account, units, _uri, _restrictions);
-    }
-
+    /**
+     * @dev Register a new project
+     * @param _name
+     * @param _imageURL
+     * @param _metadata
+     * @param _owner
+     * @param _parentHatId
+     * @return profileId
+     */
     function registerProject(
         string memory _name,
         string memory _imageURL,
@@ -170,7 +189,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         uint256 _parentHatId
     )
         external
-        returns (bytes32)
+        returns (bytes32 profileId)
     {
         // Make sure the owner is not the zero address
         require(_owner != address(0), ZERO_ADDRESS());
@@ -190,7 +209,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         hats.mintHat(hatId, _owner);
 
         // Generate a profile ID using a nonce and the msg.sender
-        bytes32 profileId = _generateProfileId(hatId, _owner, _name);
+        profileId = _generateProfileId(hatId, _owner, _name);
 
         // Create a new Profile instance, also generates the anchor address
         Profile memory profile = Profile({
@@ -212,6 +231,15 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         return profileId;
     }
 
+    /**
+     * @dev Create a new Impact Report
+     * @param _hatId
+     * @param _contributors
+     * @param _description
+     * @param _imageURL
+     * @param _amount
+     * @param _proposor
+     */
     function createReport(
         uint256 _hatId, // the hatId of the project that the report is created for
         address[] calldata _contributors,
@@ -297,6 +325,13 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
     }
 
+    /**
+     * @dev Create a new role for the Impact Report
+     * @param _poolId
+     * @param _metadata
+     * @param _wearers
+     * @param _imageURL
+     */
     function createRole(
         uint256 _poolId,
         string memory _metadata,
@@ -330,8 +365,32 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         emit RoleCreated(evaluationPool.projectHatId, roleHatId, _wearers, _metadata, _imageURL);
     }
 
-    /// @dev deploy a new evaluation contract with create2 and initialize it
-    /// @dev create a new evaluation pool struct and store it in the evaluations mapping
+    function attest(
+        bytes32 profileId,
+        address[] memory contributors,
+        string memory proposal,
+        string memory metadataUID
+    )
+        external
+        returns (bytes32 attestationUID)
+    {
+        attestationUID = _attest(profileId, contributors, proposal, metadataUID, msg.sender);
+    }
+
+    /////////////////////////////////// INTERNAL FUNCTIONS //////////////////////////////////////
+
+    /**
+     * @dev deploy a new evaluation contract with create2 and initialize it
+     * @dev create a new evaluation pool struct and store it in the evaluations mapping
+     * @param _profileId
+     * @param _hatId
+     * @param _amount
+     * @param _metadata
+     * @param _owner
+     * @param _contributors
+     * @return poolId
+     * @return evaluation
+     */
     function _createEvaluationWithPool(
         bytes32 _profileId,
         uint256 _hatId,
@@ -405,16 +464,15 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         return evaluationAddress;
     }
 
-    function attest(
-        bytes32 profileId,
-        address[] memory contributors,
-        string memory proposal,
-        string memory metadataUID
+    function _createHypercerts(
+        address account,
+        uint256 units,
+        string memory _uri,
+        TransferRestrictions _restrictions
     )
-        external
-        returns (bytes32 attestationUID)
+        internal
     {
-        attestationUID = _attest(profileId, contributors, proposal, metadataUID, msg.sender);
+        hypercert.mintClaim(account, units, _uri, _restrictions);
     }
 
     /// @dev create a new attestation
