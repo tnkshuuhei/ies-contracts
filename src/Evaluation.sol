@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/governance/IGovernor.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
+import { console } from "forge-std/console.sol";
 
 import "./libraries/Errors.sol";
 import { CEP } from "./CEP.sol";
@@ -115,6 +116,11 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
         override
         returns (bytes4)
     {
+        console.logAddress(operator);
+        console.logAddress(from);
+        console.logBytes(data);
+        console.logUint(id);
+        console.logUint(value);
         return this.onERC1155Received.selector;
     }
 
@@ -130,6 +136,13 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
         override
         returns (bytes4)
     {
+        console.logAddress(operator);
+        console.logAddress(from);
+        console.logBytes(data);
+        for (uint256 i = 0; i < ids.length; i++) {
+            console.logUint(ids[i]);
+            console.logUint(values[i]);
+        }
         return this.onERC1155BatchReceived.selector;
     }
 }
