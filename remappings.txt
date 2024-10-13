@@ -5,3 +5,4 @@ forge-std/=lib/forge-std/src/
 
 eas-contracts/=lib/eas-contracts/contracts/
 hats-contracts/=lib/hats-protocol/src/
+hypercerts/=lib/hypercerts/contracts/
