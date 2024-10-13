@@ -10,6 +10,7 @@ import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 import { IHats } from "hats-contracts/interfaces/IHats.sol";
+// import { IHypercertToken } from "hypercerts/contracts/interfaces/IHypercertToken.sol"; // solidity 0.8.16
 
 import "./gov/CEPGovernor.sol";
 import "./gov/veCEP.sol";
@@ -87,32 +88,32 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         address _owner,
         address _treasury,
         CEPGovernor _gonernor,
-        VotingCEPToken _token,
+        address _token,
         IEAS _eas,
-        ISchemaRegistry _schemaRegistry,
-        IHats _hats
+        address _schemaRegistry,
+        address _hats
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
         _updateTreasury(payable(_treasury));
 
         governor = _gonernor;
-        voteToken = _token;
+        voteToken = VotingCEPToken(_token);
 
         resolver = new AttesterResolver(_eas, address(this));
 
         // TODO: define proper schema
-        bytes32 _schemaUID = _schemaRegistry.register(
+        bytes32 _schemaUID = ISchemaRegistry(_schemaRegistry).register(
             "bytes32 profileId, address[] contributors, string proposal, string metadataUID, address proposer",
             ISchemaResolver(address(resolver)),
             true
         );
 
         schemaUID = _schemaUID;
-        hats = _hats;
+        hats = IHats(_hats);
 
         // mint topHat
-        uint256 hatId = _hats.mintTopHat(
+        uint256 hatId = IHats(_hats).mintTopHat(
             address(this), // target: Tophat's wearer address. The address that will be granted the hat.
             "Impact Evaluation DAO", // name
             "imageURL" // TODO: add the default image URL
