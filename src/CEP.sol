@@ -137,6 +137,31 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         emit Initialized(_owner, _treasury, address(_gonernor), address(_token), _schemaUID, hatId);
     }
 
+    // TODO: get tokenId from the hypercerts contract and store it
+    function createHypercerts(
+        address account,
+        uint256 units,
+        string memory _uri,
+        TransferRestrictions _restrictions
+    )
+        external
+        onlyAdmin
+    {
+        _createHypercerts(account, units, _uri, _restrictions);
+        // TODO: make this claimable
+    }
+
+    function _createHypercerts(
+        address account,
+        uint256 units,
+        string memory _uri,
+        TransferRestrictions _restrictions
+    )
+        internal
+    {
+        hypercert.mintClaim(account, units, _uri, _restrictions);
+    }
+
     function registerProject(
         string memory _name,
         string memory _imageURL,
@@ -255,6 +280,8 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
             pool.metadata.pointer,
             _proposor
         );
+
+        // TODO: give hypercerts to contributors if proposal has passed
 
         // target1: token address
         targets[0] = address(token);
