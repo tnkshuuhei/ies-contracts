@@ -11,7 +11,6 @@ import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 import { IHats } from "hats-contracts/interfaces/IHats.sol";
 import { console } from "forge-std/console.sol";
-// import { IHypercertToken } from "hypercerts/contracts/interfaces/IHypercertToken.sol"; // solidity 0.8.16
 
 import "./gov/CEPGovernor.sol";
 import "./gov/veCEP.sol";
