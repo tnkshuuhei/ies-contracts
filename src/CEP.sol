@@ -10,6 +10,7 @@ import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 import { IHats } from "hats-contracts/interfaces/IHats.sol";
+import { console } from "forge-std/console.sol";
 // import { IHypercertToken } from "hypercerts/contracts/interfaces/IHypercertToken.sol"; // solidity 0.8.16
 
 import "./gov/CEPGovernor.sol";
@@ -60,7 +61,12 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     }
 
     // Mappings
+    // poolId => EvaluationPool
     mapping(uint256 => EvaluationPool) public evaluations;
+
+    // hatId => Evaluation address
+    mapping(uint256 => address) public evaluationAddrByHatId;
+    // hatId => Profile
     mapping(uint256 => Profile) public profilesById;
 
     // Events
@@ -77,8 +83,11 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     event TreasuryUpdated(address treasury);
     event PoolFunded(uint256 indexed id, uint256 amount);
     event ProfileCreated(bytes32 indexed id, uint256 hatId, string name, string metadata, address owner);
-
+    event RoleCreated(
+        uint256 indexed projectHatid, uint256 roleHatId, address[] wearers, string metadata, string imageURL
+    );
     // Modifiers
+
     modifier onlyAdmin() {
         _checkAdmin();
         _;
@@ -91,7 +100,8 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         address _token,
         IEAS _eas,
         address _schemaRegistry,
-        address _hats
+        address _hats,
+        string memory _imageURL
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
 
@@ -116,7 +126,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         uint256 hatId = IHats(_hats).mintTopHat(
             address(this), // target: Tophat's wearer address. The address that will be granted the hat.
             "Impact Evaluation DAO", // name
-            "imageURL" // TODO: add the default image URL
+            _imageURL
         );
         topHatId = hatId;
 
@@ -173,8 +183,6 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         return profileId;
     }
 
-    // TODO: create new hat for each report
-    // TODO: create a new role hat
     function createReport(
         uint256 _hatId, // the hatId of the project that the report is created for
         address[] calldata _contributors,
@@ -206,6 +214,8 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
 
         (, Evaluation evaluation) =
             _createEvaluationWithPool(profile.id, reportHatsId, _amount, profile.metadata, _proposor, _contributors);
+
+        evaluationAddrByHatId[reportHatsId] = address(evaluation);
 
         // mint the hat to the evaluation contract
         hats.mintHat(reportHatsId, address(evaluation));
@@ -254,6 +264,39 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         uint256 proposalId = evaluation.proposeImpactReport(_contributors, targets, values, calldatas, _description);
 
         emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
+    }
+
+    function createRole(
+        uint256 _poolId,
+        string memory _metadata,
+        address[] memory _wearers,
+        string memory _imageURL
+    )
+        external
+    {
+        EvaluationPool memory evaluationPool = evaluations[_poolId];
+        // check the caller is the owner of the evaluation contract
+        require(Evaluation(evaluationPool.evaluation).owner() == msg.sender, INVALID());
+        // check the wearers array is not empty
+        require(_wearers.length > 0, INVALID());
+        // check the metadata is not empty
+        require(bytes(_metadata).length > 0, INVALID());
+
+        // create a new hat for the role
+        uint256 roleHatId = hats.createHat(
+            evaluationPool.projectHatId,
+            _metadata,
+            uint32(_wearers.length),
+            0x0000000000000000000000000000000000004A75,
+            0x0000000000000000000000000000000000004A75,
+            true,
+            _imageURL
+        );
+        for (uint256 i = 0; i < _wearers.length; i++) {
+            hats.mintHat(roleHatId, _wearers[i]);
+        }
+
+        emit RoleCreated(evaluationPool.projectHatId, roleHatId, _wearers, _metadata, _imageURL);
     }
 
     /// @dev deploy a new evaluation contract with create2 and initialize it
@@ -406,6 +449,11 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         override
         returns (bytes4)
     {
+        console.logAddress(operator);
+        console.logAddress(from);
+        console.logBytes(data);
+        console.logUint(id);
+        console.logUint(value);
         return this.onERC1155Received.selector;
     }
 
@@ -422,6 +470,13 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         override
         returns (bytes4)
     {
+        console.logAddress(operator);
+        console.logAddress(from);
+        console.logBytes(data);
+        for (uint256 i = 0; i < ids.length; i++) {
+            console.logUint(ids[i]);
+            console.logUint(values[i]);
+        }
         return this.onERC1155BatchReceived.selector;
     }
 }
