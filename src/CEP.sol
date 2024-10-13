@@ -19,6 +19,7 @@ import "./Evaluation.sol";
 import "./libraries/Errors.sol";
 import "./libraries/Metadata.sol";
 import "./eas/AttesterResolver.sol";
+import { IHypercertToken } from "./interfaces/IHypercerts.sol";
 
 // Comprehensive Evaluation Protocol
 contract CEP is AccessControl, Errors, IERC1155Receiver {
@@ -39,6 +40,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     IEAS public eas;
     AttesterResolver public resolver;
     IHats public hats;
+    IHypercertToken public hypercerts;
 
     // Structs
     struct EvaluationPool {
@@ -101,6 +103,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         IEAS _eas,
         address _schemaRegistry,
         address _hats,
+        address _hypercerts,
         string memory _imageURL
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
@@ -129,6 +132,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
             _imageURL
         );
         topHatId = hatId;
+        hypercerts = IHypercertToken(_hypercerts);
 
         emit Initialized(_owner, _treasury, address(_gonernor), address(_token), _schemaUID, hatId);
     }
