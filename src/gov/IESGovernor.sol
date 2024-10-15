@@ -9,7 +9,7 @@ import { GovernorVotesQuorumFraction } from
 import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 
-contract CEPGovernor is Governor, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
+contract IESGovernor is Governor, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
     constructor(IVotes _token) Governor("CEP Governor") GovernorVotes(_token) GovernorVotesQuorumFraction(4) { }
 
     function votingDelay() public pure override returns (uint256) {

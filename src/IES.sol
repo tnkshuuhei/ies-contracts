@@ -12,8 +12,8 @@ import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 import { IHats } from "hats-protocol/src/interfaces/IHats.sol";
 import { console } from "forge-std/console.sol";
 
-import "./gov/CEPGovernor.sol";
-import "./gov/veCEP.sol";
+import "./gov/IESGovernor.sol";
+import "./gov/VotingIESToken.sol";
 import "./Evaluation.sol";
 import "./libraries/Errors.sol";
 import "./libraries/Metadata.sol";
@@ -21,7 +21,7 @@ import "./eas/AttesterResolver.sol";
 import { IHypercertToken } from "./interfaces/IHypercerts.sol";
 
 // Comprehensive Evaluation Protocol
-contract CEP is AccessControl, Errors, IERC1155Receiver {
+contract IES is AccessControl, Errors, IERC1155Receiver {
     // Constants
     bytes32 private constant POOL_MANAGER_ROLE_PREFIX = "POOL_MANAGER_ROLE_";
     bytes32 private constant POOL_CONTRIBUTOR_ROLE_PREFIX = "POOL_CONTRIBUTOR_ROLE_";
@@ -34,8 +34,8 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     uint256 public evaluationCount;
     bytes32 public schemaUID;
 
-    CEPGovernor public governor;
-    VotingCEPToken public voteToken;
+    IESGovernor public governor;
+    VotingIESToken public voteToken;
     IEAS public eas;
     AttesterResolver public resolver;
     IHats public hats;
@@ -109,7 +109,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     constructor(
         address _owner,
         address _treasury,
-        CEPGovernor _gonernor,
+        IESGovernor _gonernor,
         address _token,
         IEAS _eas,
         address _schemaRegistry,
@@ -122,7 +122,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         _updateTreasury(payable(_treasury));
 
         governor = _gonernor;
-        voteToken = VotingCEPToken(_token);
+        voteToken = VotingIESToken(_token);
 
         resolver = new AttesterResolver(_eas, address(this));
 
@@ -430,7 +430,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         evaluation.initialize(poolId);
 
         require(evaluation.getPoolId() == poolId, MISMATCH());
-        require(address(evaluation.getCep()) == address(this), MISMATCH());
+        require(address(evaluation.getIES()) == address(this), MISMATCH());
 
         for (uint256 i = 0; i < _contributors.length; i++) {
             address contributor = _contributors[i];
@@ -509,7 +509,7 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     }
 
     function _checkAdmin() internal view {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "CEP: caller is not an admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IES: caller is not an admin");
     }
 
     function _generateProfileId(uint256 _hatsId, address _owner, string memory _name) internal pure returns (bytes32) {

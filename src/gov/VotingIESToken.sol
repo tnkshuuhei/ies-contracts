@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-contract VotingCEPToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, ERC20Permit, ERC20Votes {
+contract VotingIESToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, ERC20Permit, ERC20Votes {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
@@ -17,8 +17,8 @@ contract VotingCEPToken is ERC20, ERC20Burnable, ERC20Pausable, AccessControl, E
         address pauser,
         address minter
     )
-        ERC20("Voting CEP Token", "veCEP")
-        ERC20Permit("Voting CEP Token")
+        ERC20("Voting IES Token", "vIES")
+        ERC20Permit("Voting IES Token")
     {
         _grantRole(DEFAULT_ADMIN_ROLE, defaultAdmin);
         _grantRole(PAUSER_ROLE, pauser);

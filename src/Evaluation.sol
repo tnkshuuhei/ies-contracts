@@ -9,10 +9,10 @@ import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { console } from "forge-std/console.sol";
 
 import "./libraries/Errors.sol";
-import { CEP } from "./CEP.sol";
+import { IES } from "./IES.sol";
 
 contract Evaluation is AccessControl, Errors, IERC1155Receiver {
-    CEP public cep;
+    IES public ies;
 
     uint256 public poolId;
     address public governor;
@@ -24,20 +24,20 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
 
     event ImpactReportCreated(address[] contributors, uint256 proposalId);
 
-    constructor(address _cepAddress, address _owner, address[] memory _contributors) {
-        cep = CEP(_cepAddress);
+    constructor(address _iesAddress, address _owner, address[] memory _contributors) {
+        ies = IES(_iesAddress);
         contributors = _contributors;
 
         for (uint256 i = 0; i < _contributors.length; i++) {
             _grantRole(CONTRIBUTOR_ROLE, _contributors[i]);
         }
-        governor = address(cep.governor());
+        governor = address(ies.governor());
         owner = _owner;
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
     }
 
-    modifier onlyCep() {
-        require(_checkCep() == true, UNAUTHORIZED());
+    modifier onlyIES() {
+        require(_checkIES() == true, UNAUTHORIZED());
         _;
     }
 
@@ -54,7 +54,7 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
         string memory description
     )
         external
-        onlyCep
+        onlyIES
         returns (uint256 proposalId)
     {
         // create proposal on Governor contract
@@ -72,16 +72,16 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
         poolId = _poolId;
     }
 
-    function getCep() external view returns (address) {
-        return address(cep);
+    function getIES() external view returns (address) {
+        return address(ies);
     }
 
     function getPoolId() external view returns (uint256) {
         return poolId;
     }
 
-    function _checkCep() internal view returns (bool) {
-        require(msg.sender == address(cep), UNAUTHORIZED());
+    function _checkIES() internal view returns (bool) {
+        require(msg.sender == address(ies), UNAUTHORIZED());
         return true;
     }
 
