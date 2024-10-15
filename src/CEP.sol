@@ -96,15 +96,15 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
 
     /**
      * @dev Initializes the CEP contract
-     * @param _owner
-     * @param _treasury
-     * @param _gonernor
-     * @param _token
-     * @param _eas
-     * @param _schemaRegistry
-     * @param _hats
-     * @param _hypercerts
-     * @param _imageURL
+     * @param _owner the owner of the contract
+     * @param _treasury the treasury address
+     * @param _gonernor the governor contract address
+     * @param _token the voting token address
+     * @param _eas the EAS contract address
+     * @param _schemaRegistry the EAS schema registry address
+     * @param _hats the hats contract address
+     * @param _hypercerts the hypercerts contract address
+     * @param _imageURL the image URL of the top hat
      */
     constructor(
         address _owner,
@@ -153,16 +153,16 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     // TODO: get tokenId from the hypercerts contract and store it
     /**
      * @dev Create hypercerts
-     * @param account
-     * @param units
-     * @param _uri
-     * @param _restrictions
+     * @param account the creator of the hypercerts
+     * @param units the amount of hypercerts to be created. default is 100_000_000
+     * @param _uri the metadata CID that points to the metadata of the hypercerts
+     * @param _restrictions the transfer restrictions of the hypercerts
      */
     function createHypercerts(
         address account,
         uint256 units,
         string memory _uri,
-        TransferRestrictions _restrictions
+        IHypercertToken.TransferRestrictions _restrictions
     )
         external
         onlyAdmin
@@ -173,12 +173,12 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
 
     /**
      * @dev Register a new project
-     * @param _name
-     * @param _imageURL
-     * @param _metadata
-     * @param _owner
-     * @param _parentHatId
-     * @return profileId
+     * @param _name The name of the project
+     * @param _imageURL The image URL for the hats that represent the project
+     * @param _metadata The metadata of the project
+     * @param _owner The owner of the project
+     * @param _parentHatId The parent hatId of the project
+     * @return profileId The unique identifier of the project
      */
     function registerProject(
         string memory _name,
@@ -232,15 +232,15 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
 
     /**
      * @dev Create a new Impact Report
-     * @param _hatId
-     * @param _contributors
-     * @param _description
-     * @param _imageURL
-     * @param _amount
-     * @param _proposor
+     * @param _hatId // the hatId of the project that the report is created for
+     * @param _contributors // the addresses of the contributors
+     * @param _description // the description of the report
+     * @param _imageURL // the image URL for hats that represent the report
+     * @param _amount // the amount of token to be deposited
+     * @param _proposor // the address of the proposor
      */
     function createReport(
-        uint256 _hatId, // the hatId of the project that the report is created for
+        uint256 _hatId,
         address[] calldata _contributors,
         string memory _description,
         string memory _imageURL,
@@ -326,10 +326,10 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
 
     /**
      * @dev Create a new role for the Impact Report
-     * @param _poolId
-     * @param _metadata
-     * @param _wearers
-     * @param _imageURL
+     * @param _poolId // the poolId of the evaluation contract
+     * @param _metadata // the metadata of the role
+     * @param _wearers // the addresses of the wearers
+     * @param _imageURL // the image URL for hats that represent the role
      */
     function createRole(
         uint256 _poolId,
@@ -381,14 +381,14 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
     /**
      * @dev deploy a new evaluation contract with create2 and initialize it
      * @dev create a new evaluation pool struct and store it in the evaluations mapping
-     * @param _profileId
-     * @param _hatId
-     * @param _amount
-     * @param _metadata
-     * @param _owner
-     * @param _contributors
-     * @return poolId
-     * @return evaluation
+     * @param _profileId the profileId of the project
+     * @param _hatId the hatId of the project
+     * @param _amount the amount of token to be deposited
+     * @param _metadata the metadata
+     * @param _owner the owner of the evaluation contract
+     * @param _contributors the addresses of the contributors
+     * @return poolId the poolId of the evaluation
+     * @return evaluation the evaluation contract address
      */
     function _createEvaluationWithPool(
         bytes32 _profileId,
@@ -467,11 +467,11 @@ contract CEP is AccessControl, Errors, IERC1155Receiver {
         address account,
         uint256 units,
         string memory _uri,
-        TransferRestrictions _restrictions
+        IHypercertToken.TransferRestrictions _restrictions
     )
         internal
     {
-        hypercert.mintClaim(account, units, _uri, _restrictions);
+        hypercerts.mintClaim(account, units, _uri, _restrictions);
     }
 
     /// @dev create a new attestation
