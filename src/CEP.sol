@@ -9,7 +9,7 @@ import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "e
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
-import { IHats } from "hats-contracts/interfaces/IHats.sol";
+import { IHats } from "hats-protocol/src/interfaces/IHats.sol";
 import { console } from "forge-std/console.sol";
 
 import "./gov/CEPGovernor.sol";
