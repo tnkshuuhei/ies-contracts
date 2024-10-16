@@ -25,3 +25,6 @@
 [submodule "lib/splits-contracts-monorepo"]
 	path = lib/splits-contracts-monorepo
 	url = https://github.com/0xSplits/splits-contracts-monorepo
+[submodule "lib/splits-liquid-template"]
+	path = lib/splits-liquid-template
+	url = https://github.com/0xSplits/splits-liquid-template
