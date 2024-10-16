@@ -4,3 +4,4 @@ openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/
 forge-std/=lib/forge-std/src/
 eas-contracts/=lib/eas-contracts/contracts/
 hypercerts/=lib/hypercerts/contracts/
+splits-contracts/=lib/splits-contracts/contracts/
