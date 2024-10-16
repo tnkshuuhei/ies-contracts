@@ -19,3 +19,6 @@
 [submodule "lib/hypercerts"]
 	path = lib/hypercerts
 	url = https://github.com/hypercerts-org/hypercerts
+[submodule "lib/splits-contracts"]
+	path = lib/splits-contracts
+	url = https://github.com/0xSplits/splits-contracts
