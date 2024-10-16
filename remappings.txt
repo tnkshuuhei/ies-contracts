@@ -5,3 +5,6 @@ forge-std/=lib/forge-std/src/
 eas-contracts/=lib/eas-contracts/contracts/
 hypercerts/=lib/hypercerts/contracts/
 splits-contracts/=lib/splits-contracts/contracts/
+splits-liquid-template/=lib/splits-liquid-template/src/
+solady/=lib/solady/src/
+solmate/=lib/solmate/src/

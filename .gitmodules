@@ -28,3 +28,9 @@
 [submodule "lib/splits-liquid-template"]
 	path = lib/splits-liquid-template
 	url = https://github.com/0xSplits/splits-liquid-template
+[submodule "lib/solmate"]
+	path = lib/solmate
+	url = https://github.com/transmissions11/solmate
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/vectorized/solady
