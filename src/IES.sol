@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
+import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import { IGovernor } from "@openzeppelin/contracts/governance/IGovernor.sol";
 
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
@@ -12,7 +13,6 @@ import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 import { IHats } from "hats-protocol/src/interfaces/IHats.sol";
 import { console } from "forge-std/console.sol";
 
-import "./gov/IESGovernor.sol";
 import "./gov/VotingIESToken.sol";
 import "./Evaluation.sol";
 import "./libraries/Errors.sol";
@@ -34,7 +34,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     uint256 public evaluationCount;
     bytes32 public schemaUID;
 
-    IESGovernor public governor;
+    IGovernor public governor;
     VotingIESToken public voteToken;
     IEAS public eas;
     AttesterResolver public resolver;
@@ -109,9 +109,9 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     constructor(
         address _owner,
         address _treasury,
-        IESGovernor _gonernor,
+        address _gonernor,
         address _token,
-        IEAS _eas,
+        address _eas,
         address _schemaRegistry,
         address _hats,
         address _hypercerts,
@@ -121,10 +121,11 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         _updateTreasury(payable(_treasury));
 
-        governor = _gonernor;
+        governor = IGovernor(_gonernor);
         voteToken = VotingIESToken(_token);
 
-        resolver = new AttesterResolver(_eas, address(this));
+        eas = IEAS(_eas);
+        resolver = new AttesterResolver(IEAS(_eas), address(this));
 
         // TODO: define proper schema
         bytes32 _schemaUID = ISchemaRegistry(_schemaRegistry).register(

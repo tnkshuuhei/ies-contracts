@@ -10,7 +10,7 @@ contract IESTest is BaseTest {
     IES internal ies;
 
     VotingIESToken internal voteToken;
-    IESGovernor internal governor;
+
     IEAS internal eas;
 
     function setUp() public virtual {
