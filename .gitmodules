@@ -16,9 +16,6 @@
 [submodule "lib/hats-protocol"]
 	path = lib/hats-protocol
 	url = https://github.com/Hats-Protocol/hats-protocol
-[submodule "lib/hypercerts"]
-	path = lib/hypercerts
-	url = https://github.com/hypercerts-org/hypercerts
 [submodule "lib/splits-contracts"]
 	path = lib/splits-contracts
 	url = https://github.com/0xSplits/splits-contracts

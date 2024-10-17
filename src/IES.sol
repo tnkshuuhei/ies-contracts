@@ -10,7 +10,7 @@ import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "e
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
-import { IHats } from "hats-protocol/src/interfaces/IHats.sol";
+import { IHats } from "hats-protocol/interfaces/IHats.sol";
 import { console } from "forge-std/console.sol";
 
 import "./gov/VotingIESToken.sol";
@@ -18,7 +18,6 @@ import "./Evaluation.sol";
 import "./libraries/Errors.sol";
 import "./libraries/Metadata.sol";
 import "./eas/AttesterResolver.sol";
-import { IHypercertToken } from "./interfaces/IHypercerts.sol";
 
 // Comprehensive Evaluation Protocol
 contract IES is AccessControl, Errors, IERC1155Receiver {
@@ -39,7 +38,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     IEAS public eas;
     AttesterResolver public resolver;
     IHats public hats;
-    IHypercertToken public hypercerts;
 
     // Structs
     struct EvaluationPool {
@@ -103,7 +101,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
      * @param _eas the EAS contract address
      * @param _schemaRegistry the EAS schema registry address
      * @param _hats the hats contract address
-     * @param _hypercerts the hypercerts contract address
      * @param _imageURL the image URL of the top hat
      */
     constructor(
@@ -114,7 +111,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         address _eas,
         address _schemaRegistry,
         address _hats,
-        address _hypercerts,
         string memory _imageURL
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
@@ -144,33 +140,11 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             _imageURL
         );
         topHatId = hatId;
-        hypercerts = IHypercertToken(_hypercerts);
 
         emit Initialized(_owner, _treasury, address(_gonernor), address(_token), _schemaUID, hatId);
     }
 
     /////////////////////////////////// EXTERNAL FUNCTIONS //////////////////////////////////////
-
-    // TODO: get tokenId from the hypercerts contract and store it
-    /**
-     * @dev Create hypercerts
-     * @param account the creator of the hypercerts
-     * @param units the amount of hypercerts to be created. default is 100_000_000
-     * @param _uri the metadata CID that points to the metadata of the hypercerts
-     * @param _restrictions the transfer restrictions of the hypercerts
-     */
-    function createHypercerts(
-        address account,
-        uint256 units,
-        string memory _uri,
-        IHypercertToken.TransferRestrictions _restrictions
-    )
-        external
-        onlyAdmin
-    {
-        _createHypercerts(account, units, _uri, _restrictions);
-        // TODO: make this claimable
-    }
 
     /**
      * @dev Register a new project
@@ -462,17 +436,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         }
 
         return evaluationAddress;
-    }
-
-    function _createHypercerts(
-        address account,
-        uint256 units,
-        string memory _uri,
-        IHypercertToken.TransferRestrictions _restrictions
-    )
-        internal
-    {
-        hypercerts.mintClaim(account, units, _uri, _restrictions);
     }
 
     /// @dev create a new attestation
