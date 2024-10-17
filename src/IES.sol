@@ -22,8 +22,6 @@ import "./eas/AttesterResolver.sol";
 // Comprehensive Evaluation Protocol
 contract IES is AccessControl, Errors, IERC1155Receiver {
     // Constants
-    bytes32 private constant POOL_MANAGER_ROLE_PREFIX = "POOL_MANAGER_ROLE_";
-    bytes32 private constant POOL_CONTRIBUTOR_ROLE_PREFIX = "POOL_CONTRIBUTOR_ROLE_";
     string private constant DEFAULT_TOP_HAT_NAME = "Impact Evaluation DAO";
     string private constant REPORT_HAT_PREFIX = "[Impact Report] #";
 
@@ -136,7 +134,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         // mint topHat
         uint256 hatId = IHats(_hats).mintTopHat(
             address(this), // target: Tophat's wearer address. The address that will be granted the hat.
-            "Impact Evaluation DAO", // name
+            DEFAULT_TOP_HAT_NAME, // name: The name of the hat.
             _imageURL
         );
         topHatId = hatId;
@@ -235,7 +233,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         // create a new hat for the report
         uint256 reportHatsId = hats.createHat(
             _hatId,
-            string(abi.encodePacked("[Impact Report] #", block.timestamp)),
+            string(abi.encodePacked(REPORT_HAT_PREFIX, block.timestamp)),
             1,
             address(0),
             address(0),
