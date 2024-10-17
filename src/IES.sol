@@ -28,9 +28,10 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
     // State variables
     address payable public treasury;
+    bytes32 public schemaUID;
     uint256 public topHatId;
     uint256 public evaluationCount;
-    bytes32 public schemaUID;
+    uint256 public MIN_DEPOSIT;
 
     IGovernor public governor;
     VotingIESToken public voteToken;
@@ -46,7 +47,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         address evaluation;
         address token;
         uint256 amount;
-        Metadata metadata;
+        string metadata;
         address[] contributors;
     }
 
@@ -54,8 +55,17 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         bytes32 id;
         uint256 hatId;
         string name;
-        Metadata metadata;
+        string metadata;
         address owner;
+        string imageURL;
+    }
+
+    struct HatsRole {
+        uint256 parentHatId;
+        string metadata;
+        string name;
+        string description;
+        address[] wearers;
         string imageURL;
     }
 
@@ -83,10 +93,16 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     event PoolFunded(uint256 indexed id, uint256 amount);
     event ProfileCreated(bytes32 indexed id, uint256 hatId, string name, string metadata, address owner);
     event RoleCreated(
-        uint256 indexed projectHatid, uint256 roleHatId, address[] wearers, string metadata, string imageURL
+        uint256 indexed projectHatid,
+        uint256 reportHatId,
+        uint256 roleHatId,
+        address[] wearers,
+        string metadata,
+        string imageURL
     );
-    // Modifiers
+    event MinimumDepositChanged(uint256 indexed minDeposit);
 
+    // Modifiers
     modifier onlyAdmin() {
         _checkAdmin();
         _;
@@ -123,6 +139,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         splitsToken = IERC1155(_splitsToken);
         eas = IEAS(_eas);
         hats = IHats(_hats);
+        MIN_DEPOSIT = 1000;
 
         resolver = new AttesterResolver(IEAS(_eas), address(this));
 
@@ -153,26 +170,25 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
      * @param _imageURL The image URL for the hats that represent the project
      * @param _metadata The metadata of the project
      * @param _owner The owner of the project
-     * @param _parentHatId The parent hatId of the project
      * @return profileId The unique identifier of the project
      */
     function registerProject(
         string memory _name,
         string memory _imageURL,
-        Metadata memory _metadata, // data : { name: "Project Name", description: "Project description" }
-        address _owner,
-        uint256 _parentHatId
+        string memory _metadata, //cid for data : { name: "Project Name", description: "Project description" }
+        address _owner
     )
         external
         returns (bytes32 profileId)
     {
-        // Make sure the owner is not the zero address
+        // check
         require(_owner != address(0), ZERO_ADDRESS());
+        require(_owner == msg.sender, INVALID());
 
         // create a new hat for the project, that represents the project itself
         uint256 hatId = hats.createHat(
-            _parentHatId,
-            _metadata.pointer, // should be the project name
+            topHatId, // parent hatId
+            _metadata, // should be the project name
             1, // Max supply is 1 for the project
             0x0000000000000000000000000000000000004A75, // eligibility module address on sepolia
             0x0000000000000000000000000000000000004A75, // toggle module address on sepolia
@@ -184,7 +200,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         hats.mintHat(hatId, _owner);
 
         // Generate a profile ID using a nonce and the msg.sender
-        profileId = _generateProfileId(hatId, _owner, _name);
+        profileId = _generateProfileId(hatId, _owner, _metadata);
 
         // Create a new Profile instance, also generates the anchor address
         Profile memory profile = Profile({
@@ -200,7 +216,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         profilesById[hatId] = profile;
 
         // Emit the event that the profile was created
-        emit ProfileCreated(profileId, hatId, _name, _metadata.pointer, _owner);
+        emit ProfileCreated(profileId, hatId, _name, _metadata, _owner);
 
         // Return the profile ID
         return profileId;
@@ -212,7 +228,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
      * @param _contributors // the addresses of the contributors
      * @param _description // the description of the report
      * @param _imageURL // the image URL for hats that represent the report
-     * @param _amount // the amount of token to be deposited
      * @param _proposor // the address of the proposor
      */
     function createReport(
@@ -220,16 +235,15 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         address[] calldata _contributors,
         string memory _description,
         string memory _imageURL,
-        uint256 _amount, // amount of token to be deposited
-        address _proposor // the address of the proposor
+        address _proposor, // the address of the proposor
+        bytes[] memory _roleData
     )
         external
     {
-        require(_proposor == msg.sender, UNAUTHORIZED());
+        require(
+            _proposor == msg.sender && _proposor == profilesById[_hatId].owner && _contributors.length > 0, INVALID()
+        );
         require(_proposor != address(0), ZERO_ADDRESS());
-        require(_proposor == profilesById[_hatId].owner, UNAUTHORIZED());
-        require(_contributors.length > 0, INVALID());
-        require(_amount > 0, INVALID());
 
         Profile memory profile = profilesById[_hatId];
 
@@ -238,14 +252,18 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             _hatId,
             string(abi.encodePacked(REPORT_HAT_PREFIX, block.timestamp)),
             1,
-            address(0),
-            address(0),
+            0x0000000000000000000000000000000000004A75,
+            0x0000000000000000000000000000000000004A75,
             true,
             _imageURL
         );
 
+        // create new pool for the report
         (, Evaluation evaluation) =
-            _createEvaluationWithPool(profile.id, reportHatsId, _amount, profile.metadata, _proposor, _contributors);
+            _createEvaluationWithPool(profile.id, reportHatsId, MIN_DEPOSIT, profile.metadata, _proposor, _contributors);
+
+        // initialize the evaluation contract with poolId
+        evaluation.initialize(evaluationCount);
 
         evaluationAddrByHatId[reportHatsId] = address(evaluation);
 
@@ -255,92 +273,72 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         EvaluationPool memory pool = evaluations[evaluation.getPoolId()];
 
         // check if the msg.sender is the owner of the evaluation contract
+        // TODO: msg.sender might be a address(this)
         evaluation.checkOwner(msg.sender);
 
         // transfer the amount to the evaluation contract
         ERC20 token = ERC20(pool.token);
+
         // need approval from the msg.sender to this contract
-        // TODO: decide whitch token should be used for deposit
-        // TODO: decide how many token should be deposited, should be the pre-defined amount or the amount that is
-        // passed as an argument
-        require(token.transferFrom(msg.sender, address(evaluation), _amount), "Token transfer failed");
+        require(token.transferFrom(msg.sender, address(governor), MIN_DEPOSIT), NOT_ENOUGH_FUNDS());
 
         // create array of calldatas, targets, and values
         bytes[] memory _data = new bytes[](2 + _contributors.length);
         address[] memory _target = new address[](2 + _contributors.length);
-        uint256[] memory values = new uint256[](2 + _contributors.length);
+        uint256[] memory _values = new uint256[](2 + _contributors.length);
 
-        // calldata1: send back the token from evaluation contract to the owner address
+        // calldata1: send back the token from governor contract to the owner address
+				// TODO: governor of address(this), if proposal hasn't passed, the token will be locked to the target address...
         _data[0] =
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", address(evaluation), _proposor, _amount);
+            abi.encodeWithSignature("transferFrom(address,address,uint256)", address(governor), _proposor, MIN_DEPOSIT);
         // target1: token address
         _target[0] = address(token);
-        values[0] = 0;
+        _values[0] = 0;
 
         // calldata2: attest the proposal with the contributors
         _data[1] = abi.encodeWithSignature(
             "attest(bytes32,address[],string,string,address)",
             pool.profileId,
             _contributors,
-            _description,
-            pool.metadata.pointer,
+            _description, // TODO: use the cid
+            pool.metadata,
             _proposor
         );
         // target2: address(this)
         _target[1] = address(this);
-        values[1] = 0;
+        _values[1] = 0;
 
         // mint 1 split token to each contributor
         for (uint256 i = 0; i < _contributors.length; i++) {
             _data[i + 2] = abi.encodeWithSignature("mint(address,uint256,uint256,bytes)", _contributors[i], 0, 1, "");
             _target[i + 2] = address(this);
-            values[i + 2] = 0;
+            _values[i + 2] = 0;
         }
 
         // call the proposeImpactReport() on Evaluation
-        uint256 proposalId = evaluation.proposeImpactReport(_contributors, _target, values, _data, _description);
+        uint256 proposalId = evaluation.proposeImpactReport(_contributors, _target, _values, _data, _description);
 
-        emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
-    }
+        require(_roleData.length > 0, INVALID());
 
-    /**
-     * @dev Create a new role for the Impact Report
-     * @param _poolId // the poolId of the evaluation contract
-     * @param _metadata // the metadata of the role
-     * @param _wearers // the addresses of the wearers
-     * @param _imageURL // the image URL for hats that represent the role
-     */
-    function createRole(
-        uint256 _poolId,
-        string memory _metadata,
-        address[] memory _wearers,
-        string memory _imageURL
-    )
-        external
-    {
-        EvaluationPool memory evaluationPool = evaluations[_poolId];
-        // check the caller is the owner of the evaluation contract
-        require(Evaluation(evaluationPool.evaluation).owner() == msg.sender, INVALID());
-        // check the wearers array is not empty
-        require(_wearers.length > 0, INVALID());
-        // check the metadata is not empty
-        require(bytes(_metadata).length > 0, INVALID());
+        // create roles for the report
+        for (uint256 i = 0; i < _roleData.length; i++) {
+            HatsRole memory role = abi.decode(_roleData[i], (HatsRole));
+            require(role.wearers.length > 0, INVALID());
+            require(bytes(role.metadata).length > 0, INVALID());
+            require(bytes(role.imageURL).length > 0, INVALID());
 
-        // create a new hat for the role
-        uint256 roleHatId = hats.createHat(
-            evaluationPool.projectHatId,
-            _metadata,
-            uint32(_wearers.length),
-            0x0000000000000000000000000000000000004A75,
-            0x0000000000000000000000000000000000004A75,
-            true,
-            _imageURL
-        );
-        for (uint256 i = 0; i < _wearers.length; i++) {
-            hats.mintHat(roleHatId, _wearers[i]);
+            uint256 roleHatId = hats.createHat(
+                reportHatsId, role.metadata, uint32(role.wearers.length), address(0), address(0), true, role.imageURL
+            );
+            for (uint256 j = 0; j < role.wearers.length; j++) {
+                require(role.wearers[j] != address(0), ZERO_ADDRESS());
+                hats.mintHat(roleHatId, role.wearers[j]);
+            }
+
+            emit RoleCreated(_hatId, reportHatsId, roleHatId, role.wearers, role.metadata, role.imageURL);
         }
 
-        emit RoleCreated(evaluationPool.projectHatId, roleHatId, _wearers, _metadata, _imageURL);
+        emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
     }
 
     function attest(
@@ -353,6 +351,11 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         returns (bytes32 attestationUID)
     {
         attestationUID = _attest(profileId, contributors, proposal, metadataUID, msg.sender);
+    }
+
+    function changeMinDeposit(uint256 _minDeposit) external onlyAdmin {
+        MIN_DEPOSIT = _minDeposit;
+        emit MinimumDepositChanged(_minDeposit);
     }
 
     /////////////////////////////////// INTERNAL FUNCTIONS //////////////////////////////////////
@@ -373,7 +376,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         bytes32 _profileId,
         uint256 _hatId,
         uint256 _amount,
-        Metadata memory _metadata,
+        string memory _metadata,
         address _owner,
         address[] memory _contributors
     )
@@ -480,8 +483,16 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IES: caller is not an admin");
     }
 
-    function _generateProfileId(uint256 _hatsId, address _owner, string memory _name) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_hatsId, _owner, _name));
+    function _generateProfileId(
+        uint256 _hatsId,
+        address _owner,
+        string memory _metadata
+    )
+        internal
+        pure
+        returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(_hatsId, _owner, _metadata));
     }
 
     function _updateTreasury(address payable _treasury) internal {
