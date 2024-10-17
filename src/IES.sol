@@ -178,14 +178,14 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         address _owner
     )
         external
-        returns (bytes32 profileId)
+        returns (bytes32 profileId, uint256 hatId)
     {
         // check
         require(_owner != address(0), ZERO_ADDRESS());
         require(_owner == msg.sender, INVALID());
 
         // create a new hat for the project, that represents the project itself
-        uint256 hatId = hats.createHat(
+        hatId = hats.createHat(
             topHatId, // parent hatId
             _metadata, // should be the project name
             1, // Max supply is 1 for the project
@@ -218,7 +218,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         emit ProfileCreated(profileId, hatId, _name, _metadata, _owner);
 
         // Return the profile ID
-        return profileId;
+        return (profileId, hatId);
     }
 
     /**
