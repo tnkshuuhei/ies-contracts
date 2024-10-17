@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Pausable.sol";
-import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Burnable.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/ERC1155Supply.sol";
 
 import { LiquidSplit } from "splits-liquid-template/LiquidSplit.sol";
@@ -14,7 +13,7 @@ import { utils } from "splits-liquid-template/libs/Utils.sol";
 import { LibString } from "solmate/utils/LibString.sol";
 import { Base64 } from "solady/utils/Base64.sol";
 
-contract LiquidSplits1155 is LiquidSplit, ERC1155, AccessControl, ERC1155Pausable, ERC1155Burnable, ERC1155Supply {
+contract LiquidSplits1155 is LiquidSplit, ERC1155, AccessControl, ERC1155Pausable, ERC1155Supply {
     bytes32 public constant URI_SETTER_ROLE = keccak256("URI_SETTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -43,16 +42,12 @@ contract LiquidSplits1155 is LiquidSplit, ERC1155, AccessControl, ERC1155Pausabl
 
     uint256 internal constant TOKEN_ID = 0;
 
-    // TODO: shoul we have a max supply?
-    uint32 internal constant TOTAL_SUPPLY = 1_000_000;
-
     uint256 public immutable mintedOnTimestamp;
 
     /// -----------------------------------------------------------------------
     /// constructor
     /// -----------------------------------------------------------------------
 
-    // TODO: how to handle the initial share of the token?
     constructor(
         address _splitMain,
         address[] memory accounts,
@@ -73,12 +68,12 @@ contract LiquidSplits1155 is LiquidSplit, ERC1155, AccessControl, ERC1155Pausabl
             revert InvalidLiquidSplit__AccountsAndAllocationsMismatch(accounts.length, initAllocations.length);
         }
 
-        {
-            uint32 sum = _getSum(initAllocations);
-            if (sum != TOTAL_SUPPLY) {
-                revert InvalidLiquidSplit__InvalidAllocationsSum(sum);
-            }
-        }
+        // {
+        //     uint32 sum = _getSum(initAllocations);
+        //     if (sum != totalSupply) {
+        //         revert InvalidLiquidSplit__InvalidAllocationsSum(sum);
+        //     }
+        // }
 
         /// effects
 
@@ -181,14 +176,6 @@ contract LiquidSplits1155 is LiquidSplit, ERC1155, AccessControl, ERC1155Pausabl
 
     function mint(address account, uint256 amount, bytes memory data) public onlyRole(MINTER_ROLE) {
         _mint(account, TOKEN_ID, amount, data);
-    }
-
-    function burn(address account, uint256 amount) public {
-        require(
-            account == _msgSender() || isApprovedForAll(account, _msgSender()),
-            "ERC1155: caller is not token owner or approved"
-        );
-        _burn(account, TOKEN_ID, amount);
     }
 
     // The following functions are overrides required by Solidity.
