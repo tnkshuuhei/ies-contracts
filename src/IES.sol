@@ -2,6 +2,7 @@
 pragma solidity >=0.8.25;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import { IGovernor } from "@openzeppelin/contracts/governance/IGovernor.sol";
@@ -36,6 +37,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     IEAS public eas;
     AttesterResolver public resolver;
     IHats public hats;
+    IERC1155 public splitsToken;
 
     // Structs
     struct EvaluationPool {
@@ -100,6 +102,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
      * @param _schemaRegistry the EAS schema registry address
      * @param _hats the hats contract address
      * @param _imageURL the image URL of the top hat
+     * @param _splitsToken the splits token address
      */
     constructor(
         address _owner,
@@ -109,16 +112,18 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         address _eas,
         address _schemaRegistry,
         address _hats,
-        string memory _imageURL
+        string memory _imageURL,
+        address _splitsToken
     ) {
         _grantRole(DEFAULT_ADMIN_ROLE, _owner);
-
         _updateTreasury(payable(_treasury));
 
         governor = IGovernor(_gonernor);
         voteToken = VotingIESToken(_token);
-
+        splitsToken = IERC1155(_splitsToken);
         eas = IEAS(_eas);
+        hats = IHats(_hats);
+
         resolver = new AttesterResolver(IEAS(_eas), address(this));
 
         // TODO: define proper schema
@@ -127,9 +132,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             ISchemaResolver(address(resolver)),
             true
         );
-
         schemaUID = _schemaUID;
-        hats = IHats(_hats);
 
         // mint topHat
         uint256 hatId = IHats(_hats).mintTopHat(
@@ -263,16 +266,19 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         require(token.transferFrom(msg.sender, address(evaluation), _amount), "Token transfer failed");
 
         // create array of calldatas, targets, and values
-        bytes[] memory calldatas;
-        address[] memory targets;
-        uint256[] memory values;
+        bytes[] memory _data = new bytes[](2 + _contributors.length);
+        address[] memory _target = new address[](2 + _contributors.length);
+        uint256[] memory values = new uint256[](2 + _contributors.length);
 
         // calldata1: send back the token from evaluation contract to the owner address
-        calldatas[0] =
+        _data[0] =
             abi.encodeWithSignature("transferFrom(address,address,uint256)", address(evaluation), _proposor, _amount);
+        // target1: token address
+        _target[0] = address(token);
+        values[0] = 0;
 
         // calldata2: attest the proposal with the contributors
-        calldatas[1] = abi.encodeWithSignature(
+        _data[1] = abi.encodeWithSignature(
             "attest(bytes32,address[],string,string,address)",
             pool.profileId,
             _contributors,
@@ -280,19 +286,19 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             pool.metadata.pointer,
             _proposor
         );
-
-        // TODO: give hypercerts to contributors if proposal has passed
-
-        // target1: token address
-        targets[0] = address(token);
         // target2: address(this)
-        targets[1] = address(this);
-
-        values[0] = 0;
+        _target[1] = address(this);
         values[1] = 0;
 
+        // mint 1 split token to each contributor
+        for (uint256 i = 0; i < _contributors.length; i++) {
+            _data[i + 2] = abi.encodeWithSignature("mint(address,uint256,uint256,bytes)", _contributors[i], 0, 1, "");
+            _target[i + 2] = address(this);
+            values[i + 2] = 0;
+        }
+
         // call the proposeImpactReport() on Evaluation
-        uint256 proposalId = evaluation.proposeImpactReport(_contributors, targets, values, calldatas, _description);
+        uint256 proposalId = evaluation.proposeImpactReport(_contributors, _target, values, _data, _description);
 
         emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
     }

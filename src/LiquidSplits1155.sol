@@ -191,18 +191,6 @@ contract LiquidSplits1155 is LiquidSplit, ERC1155, AccessControl, ERC1155Pausabl
         _burn(account, TOKEN_ID, amount);
     }
 
-    function mintBatch(
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    )
-        public
-        onlyRole(MINTER_ROLE)
-    {
-        _mintBatch(to, ids, amounts, data);
-    }
-
     // The following functions are overrides required by Solidity.
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC1155, AccessControl) returns (bool) {
