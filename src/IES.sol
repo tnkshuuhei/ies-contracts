@@ -318,7 +318,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         // mint 1 split token to each contributor
         for (uint256 i = 0; i < _contributors.length; i++) {
             _data[i + 2] = abi.encodeWithSignature("mint(address,uint256,uint256,bytes)", _contributors[i], 0, 1, "");
-            _target[i + 2] = address(this);
+            _target[i + 2] = address(splitsToken);
             _values[i + 2] = 0;
         }
 
