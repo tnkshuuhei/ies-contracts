@@ -3,11 +3,11 @@ pragma solidity >=0.8.25;
 
 import { BaseTest } from "./Base.t.sol";
 import { console2 } from "forge-std/console2.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import { IGovernor } from "@openzeppelin/contracts/governance/IGovernor.sol";
 
 import { IEAS, Attestation, AttestationRequest, AttestationRequestData } from "eas-contracts/IEAS.sol";
 import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
@@ -16,13 +16,15 @@ import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 import { IHats } from "hats-protocol/interfaces/IHats.sol";
 import { console } from "forge-std/console.sol";
 
-import "../src/IES.sol";
+import { IES } from "../src/IES.sol";
 import "../src/gov/VotingIESToken.sol";
-import "../src/LiquidSplits1155.sol";
+import "../src/gov/IESGovernor.sol";
+import { LiquidSplits1155 } from "../src/LiquidSplits1155.sol";
 
 contract IESTest is BaseTest {
     IES internal ies;
     VotingIESToken internal voteToken;
+    IESGovernor internal governor;
     IEAS internal eas;
     ISchemaRegistry internal schemaRegistry;
     IHats internal hats;
@@ -33,6 +35,29 @@ contract IESTest is BaseTest {
     address internal constant MOCK_SCHEMA_REGISTRY = address(0x2);
     address internal constant MOCK_HATS = address(0x3);
     address internal constant MOCK_SPLITS_TOKEN = address(0x4);
+
+    event ImpactReportCreated(uint256 indexed projectHatId, uint256 indexed reportHatId, uint256 indexed proposalId);
+    event Initialized(
+        address indexed owner,
+        address indexed treasury,
+        address indexed governor,
+        address token,
+        bytes32 schemaUID,
+        uint256 topHatId
+    );
+    event EvaluationCreated(uint256 indexed id, address indexed evaluation);
+    event TreasuryUpdated(address treasury);
+    event PoolFunded(uint256 indexed id, uint256 amount);
+    event ProfileCreated(bytes32 indexed id, uint256 hatId, string name, string metadata, address owner);
+    event RoleCreated(
+        uint256 indexed projectHatid,
+        uint256 reportHatId,
+        uint256 roleHatId,
+        address[] wearers,
+        string metadata,
+        string imageURL
+    );
+    event MinimumDepositChanged(uint256 indexed minDeposit);
 
     function configureChain() public {
         if (block.chainid == 11_155_111) {
@@ -70,12 +95,20 @@ contract IESTest is BaseTest {
         configureChain();
         // Deploy VotingIESToken
         voteToken = new VotingIESToken(owner, owner, owner);
+        // Deploy IESGovernor
+        governor = new IESGovernor(IVotes(address(voteToken)));
+
+        // Mint voteToken to owner, alice, bob, charlie
+        __mintVoteToken(owner, 1_000_000);
+        __mintVoteToken(alice, 1_000_000);
+        __mintVoteToken(bob, 1_000_000);
+        __mintVoteToken(charlie, 1_000_000);
 
         // Deploy IES contract
         ies = new IES(
             owner,
             treasury,
-            address(0), // governor address, set to 0 for simplicity
+            address(governor),
             address(voteToken),
             address(eas),
             address(schemaRegistry),
@@ -116,6 +149,89 @@ contract IESTest is BaseTest {
         assertEq(storedName, name, "Project name should match");
         assertEq(storedMetadata, metadata, "Project metadata should match");
         assertEq(storedOwner, alice, "Project owner should be Alice");
+    }
+
+    function testCreateReport() external {
+        // alice should approve to spend voteToken
+        __approveVoteToken(alice, address(ies), 1000);
+
+        // alice create the project
+        (, uint256 projectHatId) =
+            __registerProject("Test Project", "https://example.com/project.png", "ipfs://QmTest", alice);
+
+        // create address[] _contributors with bob, charlie
+        address[] memory role1_contributors = new address[](2);
+        role1_contributors[0] = bob;
+        role1_contributors[1] = charlie;
+
+        address[] memory role2_contributors = new address[](3);
+        role2_contributors[0] = alice;
+        role2_contributors[1] = bob;
+        role2_contributors[2] = charlie;
+
+        // create bytes[] _roleData, roleData is encoded HatsRole[] struct
+        bytes[] memory roleData = new bytes[](2);
+        IES.HatsRole memory role1 = IES.HatsRole({
+            parentHatId: projectHatId,
+            metadata: "ipfs://QmRole1",
+            name: "Researcher",
+            description: "Researcher role",
+            wearers: role1_contributors,
+            imageURL: "https://example.com/role1.png"
+        });
+
+        IES.HatsRole memory role2 = IES.HatsRole({
+            parentHatId: projectHatId,
+            metadata: "ipfs://QmRole2",
+            name: "Developer",
+            description: "Developer role",
+            wearers: role2_contributors,
+            imageURL: "https://example.com/role2.png"
+        });
+
+        // Store the role data in the roleData array
+        roleData[0] = abi.encode(role1);
+        roleData[1] = abi.encode(role2);
+
+        vm.startPrank(alice);
+        // Create the report
+        (uint256 reportHatsId, uint256 poolId,) = ies.createReport(
+            projectHatId, role2_contributors, "ipfs://QmReport", "https://example.com/report.png", alice, roleData
+        );
+
+        (string memory details, uint32 maxSupply, uint32 supply,,, string memory imageURI,,,) =
+            hats.viewHat(reportHatsId);
+
+        assertEq(poolId, 0, "Pool ID should be 0");
+
+        // check hats
+        assertEq(details, "[Impact Report] #1", "Details should match");
+        assertEq(maxSupply, 1, "Max supply should be 1");
+        assertEq(supply, 1, "Supply should be 1");
+        assertEq(imageURI, "https://example.com/report.png", "Image URI should match");
+
+        vm.stopPrank();
+    }
+
+    function __registerProject(
+        string memory name,
+        string memory imageURL,
+        string memory metadata,
+        address owner
+    )
+        internal
+        prankception(owner)
+        returns (bytes32 profileId, uint256 projectHatId)
+    {
+        (profileId, projectHatId /* hatId */ ) = ies.registerProject(name, imageURL, metadata, owner);
+    }
+
+    function __mintVoteToken(address to, uint256 amount) internal prankception(owner) {
+        voteToken.mint(to, amount);
+    }
+
+    function __approveVoteToken(address caller, address spender, uint256 amount) internal prankception(caller) {
+        voteToken.approve(spender, amount);
     }
 
     function testChangeMinDeposit() external {
