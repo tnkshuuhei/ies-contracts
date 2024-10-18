@@ -17,6 +17,7 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
     uint256 public poolId;
     address public governor;
     address public owner;
+    bool public initialized = false;
 
     address[] public contributors;
 
@@ -67,9 +68,9 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
         return proposalId;
     }
 
-    // TODO: implement the initialize function
     function initialize(uint256 _poolId) external {
         poolId = _poolId;
+        initialized = true;
     }
 
     function getIES() external view returns (address) {

@@ -12,17 +12,18 @@ import { ISchemaRegistry } from "eas-contracts/ISchemaRegistry.sol";
 import { SchemaResolver } from "eas-contracts/resolver/SchemaResolver.sol";
 import { ISchemaResolver } from "eas-contracts/resolver/ISchemaResolver.sol";
 import { IHats } from "hats-protocol/interfaces/IHats.sol";
+import { LibString } from "solady/utils/LibString.sol";
 import { console } from "forge-std/console.sol";
 
-import "./gov/VotingIESToken.sol";
-import "./Evaluation.sol";
-import "./libraries/Errors.sol";
-import "./eas/AttesterResolver.sol";
+import { VotingIESToken } from "./gov/VotingIESToken.sol";
+import { Evaluation } from "./Evaluation.sol";
+import { Errors } from "./libraries/Errors.sol";
+import { AttesterResolver } from "./eas/AttesterResolver.sol";
 
 // Comprehensive Evaluation Protocol
 contract IES is AccessControl, Errors, IERC1155Receiver {
     // Constants
-    string private constant DEFAULT_TOP_HAT_NAME = "Impact Evaluation DAO";
+    string private constant DEFAULT_TOP_HAT_NAME = "IES";
     string private constant REPORT_HAT_PREFIX = "[Impact Report] #";
 
     // State variables
@@ -74,8 +75,12 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
     // hatId => Evaluation address
     mapping(uint256 => address) public evaluationAddrByHatId;
+
     // hatId => Profile
     mapping(uint256 => Profile) public profilesById;
+
+    // hatsid => count
+    mapping(uint256 => uint256) public projectReportCount;
 
     // Events
     event ImpactReportCreated(uint256 indexed projectHatId, uint256 indexed reportHatId, uint256 indexed proposalId);
@@ -238,6 +243,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         bytes[] memory _roleData
     )
         external
+        returns (uint256 reportHatsId, uint256 poolId, uint256 proposalId)
     {
         require(
             _proposor == msg.sender && _proposor == profilesById[_hatId].owner && _contributors.length > 0, INVALID()
@@ -246,10 +252,12 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         Profile memory profile = profilesById[_hatId];
 
+        projectReportCount[_hatId]++;
+
         // create a new hat for the report
-        uint256 reportHatsId = hats.createHat(
+        reportHatsId = hats.createHat(
             _hatId,
-            string(abi.encodePacked(REPORT_HAT_PREFIX, block.timestamp)),
+            string(abi.encodePacked(REPORT_HAT_PREFIX, LibString.toString(projectReportCount[_hatId]))),
             1,
             0x0000000000000000000000000000000000004A75,
             0x0000000000000000000000000000000000004A75,
@@ -261,8 +269,8 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         (, Evaluation evaluation) =
             _createEvaluationWithPool(profile.id, reportHatsId, MIN_DEPOSIT, profile.metadata, _proposor, _contributors);
 
-        // initialize the evaluation contract with poolId
-        evaluation.initialize(evaluationCount);
+        // Check If the evaluation contract is already initialized
+        require(evaluation.initialized() == true, INVALID());
 
         evaluationAddrByHatId[reportHatsId] = address(evaluation);
 
@@ -315,7 +323,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         }
 
         // call the proposeImpactReport() on Evaluation
-        uint256 proposalId = evaluation.proposeImpactReport(_contributors, _target, _values, _data, _description);
+        proposalId = evaluation.proposeImpactReport(_contributors, _target, _values, _data, _description);
 
         require(_roleData.length > 0, INVALID());
 
@@ -327,7 +335,13 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             require(bytes(role.imageURL).length > 0, INVALID());
 
             uint256 roleHatId = hats.createHat(
-                reportHatsId, role.metadata, uint32(role.wearers.length), address(0), address(0), true, role.imageURL
+                reportHatsId,
+                role.metadata,
+                uint32(role.wearers.length),
+                0x0000000000000000000000000000000000004A75,
+                0x0000000000000000000000000000000000004A75,
+                true,
+                role.imageURL
             );
             for (uint256 j = 0; j < role.wearers.length; j++) {
                 require(role.wearers[j] != address(0), ZERO_ADDRESS());
@@ -338,6 +352,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         }
 
         emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
+        return (reportHatsId, evaluation.getPoolId(), proposalId);
     }
 
     function attest(
@@ -382,13 +397,15 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         internal
         returns (uint256 poolId, Evaluation evaluation)
     {
-        poolId = ++evaluationCount;
+        poolId = evaluationCount;
         bytes32 POOL_MANAGER_ROLE = bytes32(poolId);
         bytes32 POOL_CONTRIBUTOR_ROLE = keccak256(abi.encodePacked(poolId, "contributor"));
 
         _grantRole(POOL_MANAGER_ROLE, msg.sender);
 
         evaluation = _createEvaluation(_profileId, _owner, _contributors);
+
+        evaluationCount++;
 
         require(address(evaluation) != address(0), ZERO_ADDRESS());
 
@@ -420,7 +437,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
             _grantRole(POOL_CONTRIBUTOR_ROLE, contributor);
         }
-
+        emit EvaluationCreated(poolId, address(evaluation));
         return (poolId, evaluation);
     }
 
