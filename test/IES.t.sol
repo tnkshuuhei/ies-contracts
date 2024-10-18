@@ -172,21 +172,22 @@ contract IESTest is BaseTest {
         // create bytes[] _roleData, roleData is encoded HatsRole[] struct
         bytes[] memory roleData = new bytes[](2);
         IES.HatsRole memory role1 = IES.HatsRole({
-            parentHatId: projectHatId,
-            metadata: "ipfs://QmRole1",
+            parentHatId: projectHatId, // hatsId for Commons:
+                // 16553408899135050155131589418399235790963711658175777136977480041627648
+            metadata: "ipfs://QmQh48H7yrw6i5PQANXbSTyC4D7WLLUUn5V4Pv1Hwo2M68",
             name: "Researcher",
             description: "Researcher role",
             wearers: role1_contributors,
-            imageURL: "https://example.com/role1.png"
+            imageURL: "ipfs://QmTRGCnTfwHhyr64aSNZqpP68ABFNQu9W9TJZEo4vL3FRu"
         });
 
         IES.HatsRole memory role2 = IES.HatsRole({
             parentHatId: projectHatId,
-            metadata: "ipfs://QmRole2",
+            metadata: "ipfs://Qma89Row648R7vpPzis2qpz3a9SZAmTR5pEGCYPM2FXH9J",
             name: "Developer",
             description: "Developer role",
             wearers: role2_contributors,
-            imageURL: "https://example.com/role2.png"
+            imageURL: "ipfs://QmRZ9ULzLKC1uzAvLyxAAhYoXyQMS413zPviGLu6vG4Bzw"
         });
 
         // Store the role data in the roleData array
@@ -196,7 +197,12 @@ contract IESTest is BaseTest {
         vm.startPrank(alice);
         // Create the report
         (uint256 reportHatsId, uint256 poolId,) = ies.createReport(
-            projectHatId, role2_contributors, "ipfs://QmReport", "https://example.com/report.png", alice, roleData
+            projectHatId,
+            role2_contributors,
+            "ipfs://QmReport",
+            "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v",
+            alice,
+            roleData
         );
 
         (string memory details, uint32 maxSupply, uint32 supply,,, string memory imageURI,,,) =
@@ -208,7 +214,7 @@ contract IESTest is BaseTest {
         assertEq(details, "[Impact Report] #1", "Details should match");
         assertEq(maxSupply, 1, "Max supply should be 1");
         assertEq(supply, 1, "Supply should be 1");
-        assertEq(imageURI, "https://example.com/report.png", "Image URI should match");
+        assertEq(imageURI, "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v", "Image URI should match");
 
         vm.stopPrank();
     }

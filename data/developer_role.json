@@ -1,0 +1,9 @@
+{
+  "type": "1.0",
+  "data": {
+    "name": "Developer Role",
+    "description": "Develop some stuff",
+    "responsibilities": [],
+    "authorities": []
+  }
+}
