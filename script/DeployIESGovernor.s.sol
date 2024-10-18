@@ -4,18 +4,17 @@ pragma solidity >=0.8.25;
 import { console } from "forge-std/console.sol";
 import { Script } from "forge-std/Script.sol";
 import { IESGovernor } from "../src/gov/IESGovernor.sol";
+import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract DeployIESGovernor is Script {
     address public admin = 0xc3593524E2744E547f013E17E6b0776Bc27Fc614;
+    //sepolia
+    address public votingToken = 0x527B739C24339c1621D9bE1F9fcdC9Adad1E883b;
 
     function run() public {
         vm.startBroadcast();
-        address token = 0xFD48e7f4c8EE34109607bb1EB1A6779A21884A03;
-
-        IESGovernor governor = IESGovernor(payable(token));
-
-        console.log("Deployed IESGovernor at:", address(governor));
+        new IESGovernor(IVotes(votingToken));
         vm.stopBroadcast();
     }
 }
