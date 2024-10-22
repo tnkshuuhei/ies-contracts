@@ -12,9 +12,12 @@ contract DeployIESGovernor is Script {
     //sepolia
     address public votingToken = 0x527B739C24339c1621D9bE1F9fcdC9Adad1E883b;
 
+    uint256 public delay = 10 minutes;
+    uint256 public period = 20 minutes;
+
     function run() public {
         vm.startBroadcast();
-        new IESGovernor(IVotes(votingToken));
+        new IESGovernor(IVotes(votingToken), delay, period);
         vm.stopBroadcast();
     }
 }

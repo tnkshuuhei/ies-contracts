@@ -10,14 +10,28 @@ import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 
 contract IESGovernor is Governor, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
-    constructor(IVotes _token) Governor("CEP Governor") GovernorVotes(_token) GovernorVotesQuorumFraction(4) { }
+    uint256 _votingDelay;
+    uint256 _votingPeriod;
 
-    function votingDelay() public pure override returns (uint256) {
-        return 1 days;
+    constructor(
+        IVotes _token,
+        uint256 delay,
+        uint256 period
+    )
+        Governor("IES Governor")
+        GovernorVotes(_token)
+        GovernorVotesQuorumFraction(4)
+    {
+        _votingDelay = delay;
+        _votingPeriod = period;
     }
 
-    function votingPeriod() public pure override returns (uint256) {
-        return 1 weeks;
+    function votingDelay() public view override returns (uint256) {
+        return _votingDelay;
+    }
+
+    function votingPeriod() public view override returns (uint256) {
+        return _votingPeriod;
     }
 
     // The following functions are overrides required by Solidity.

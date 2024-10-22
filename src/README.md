@@ -2,7 +2,7 @@
 
 [hats tree on sepolia](https://app.hatsprotocol.xyz/trees/11155111/614)
 
-<!-- 
+<!--
 ## Supported Mainnet Networks
 
 | Network         | Chain ID |
@@ -15,16 +15,14 @@
 | Base            | 8453     |
 | Polygon         | 137      |
 | Avalanche       | 43114    |
-| Scroll          | 534352   | 
+| Scroll          | 534352   |
 -->
 
 ## Supported Testnet Networks
 
-| Network         | Chain ID |
-| --------------- | -------- |
-| Sepolia         | 11155111 |
-
-
+| Network | Chain ID |
+| ------- | -------- |
+| Sepolia | 11155111 |
 
 ## Deployed Contracts on Sepolia
 
@@ -38,15 +36,15 @@
 <tbody>
     <tr>
         <td>IES.sol</td>
-        <td>0x2a182404D188E0e079916D5a8789aEC85839Af61</td>
+        <td>0xa039AFeC654b12340C6dD32f6cc193270AfA8db1</td>
     </tr>
     <tr>
         <td>VotingIESToken.sol</td>
-        <td>0x527B739C24339c1621D9bE1F9fcdC9Adad1E883b</td>
+        <td>0xca6116D275f1B2B5bCB604b76bB4B5d8FD2D581D</td>
     </tr>
     <tr>
         <td>IESGovernor.sol</td>
-        <td>0x43e090616677b6ff8f86875c27e34855E252c9fB</td>
+        <td>0x0cFd8612426484A1b91b9F85ceba91a0341018CD</td>
     </tr>
     <tr>
         <td>LiquidSplits1155.sol</td>
