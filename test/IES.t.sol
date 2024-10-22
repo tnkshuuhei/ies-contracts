@@ -93,10 +93,13 @@ contract IESTest is BaseTest {
 
     function setUp() public virtual {
         configureChain();
+
+        uint256 delay = 1 days;
+        uint256 period = 1 weeks;
         // Deploy VotingIESToken
         voteToken = new VotingIESToken(owner, owner, owner);
         // Deploy IESGovernor
-        governor = new IESGovernor(IVotes(address(voteToken)));
+        governor = new IESGovernor(IVotes(address(voteToken)), delay, period);
 
         // Mint voteToken to owner, alice, bob, charlie
         __mintVoteToken(owner, 1_000_000);
@@ -159,46 +162,20 @@ contract IESTest is BaseTest {
         (, uint256 projectHatId) =
             __registerProject("Test Project", "https://example.com/project.png", "ipfs://QmTest", alice);
 
-        // create address[] _contributors with bob, charlie
-        address[] memory role1_contributors = new address[](2);
-        role1_contributors[0] = bob;
-        role1_contributors[1] = charlie;
-
-        address[] memory role2_contributors = new address[](3);
-        role2_contributors[0] = alice;
-        role2_contributors[1] = bob;
-        role2_contributors[2] = charlie;
-
         // create bytes[] _roleData, roleData is encoded HatsRole[] struct
-        bytes[] memory roleData = new bytes[](2);
-        IES.HatsRole memory role1 = IES.HatsRole({
-            parentHatId: projectHatId, // hatsId for Commons:
-                // 16553408899135050155131589418399235790963711658175777136977480041627648
-            metadata: "ipfs://QmQh48H7yrw6i5PQANXbSTyC4D7WLLUUn5V4Pv1Hwo2M68",
-            name: "Researcher",
-            description: "Researcher role",
-            wearers: role1_contributors,
-            imageURL: "ipfs://QmTRGCnTfwHhyr64aSNZqpP68ABFNQu9W9TJZEo4vL3FRu"
-        });
+        bytes[] memory roleData = __createRoleData(projectHatId);
 
-        IES.HatsRole memory role2 = IES.HatsRole({
-            parentHatId: projectHatId,
-            metadata: "ipfs://Qma89Row648R7vpPzis2qpz3a9SZAmTR5pEGCYPM2FXH9J",
-            name: "Developer",
-            description: "Developer role",
-            wearers: role2_contributors,
-            imageURL: "ipfs://QmRZ9ULzLKC1uzAvLyxAAhYoXyQMS413zPviGLu6vG4Bzw"
-        });
-
-        // Store the role data in the roleData array
-        roleData[0] = abi.encode(role1);
-        roleData[1] = abi.encode(role2);
+        address[] memory contributors = new address[](3);
+        contributors[0] = alice;
+        contributors[1] = bob;
+        contributors[2] = charlie;
 
         vm.startPrank(alice);
+
         // Create the report
         (uint256 reportHatsId, uint256 poolId,) = ies.createReport(
             projectHatId,
-            role2_contributors,
+            contributors,
             "ipfs://QmReport",
             "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v",
             alice,
@@ -217,6 +194,41 @@ contract IESTest is BaseTest {
         assertEq(imageURI, "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v", "Image URI should match");
 
         vm.stopPrank();
+    }
+
+    function __createRoleData(uint256 projectHatId) internal view returns (bytes[] memory) {
+        // create address[] _contributors with bob, charlie
+        address[] memory role1_contributors = new address[](2);
+        role1_contributors[0] = bob;
+        role1_contributors[1] = charlie;
+
+        address[] memory role2_contributors = new address[](3);
+        role2_contributors[0] = alice;
+        role2_contributors[1] = bob;
+        role2_contributors[2] = charlie;
+
+        IES.HatsRole memory role1 = IES.HatsRole({
+            parentHatId: projectHatId, // hatsId for Commons:
+                // 16553408899135050155131589418399235790963711658175777136977480041627648
+            metadata: "ipfs://QmQh48H7yrw6i5PQANXbSTyC4D7WLLUUn5V4Pv1Hwo2M68",
+            name: "Researcher",
+            description: "Researcher role",
+            wearers: role1_contributors,
+            imageURL: "ipfs://QmTRGCnTfwHhyr64aSNZqpP68ABFNQu9W9TJZEo4vL3FRu"
+        });
+
+        IES.HatsRole memory role2 = IES.HatsRole({
+            parentHatId: projectHatId,
+            metadata: "ipfs://Qma89Row648R7vpPzis2qpz3a9SZAmTR5pEGCYPM2FXH9J",
+            name: "Developer",
+            description: "Developer role",
+            wearers: role2_contributors,
+            imageURL: "ipfs://QmRZ9ULzLKC1uzAvLyxAAhYoXyQMS413zPviGLu6vG4Bzw"
+        });
+        bytes[] memory roleData = new bytes[](2);
+        roleData[0] = abi.encode(role1);
+        roleData[1] = abi.encode(role2);
+        return roleData;
     }
 
     function __registerProject(
