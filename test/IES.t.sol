@@ -172,12 +172,18 @@ contract IESTest is BaseTest {
 
         vm.startPrank(alice);
 
+        string[] memory links = new string[](2);
+        links[0] = "ipfs://QmReport";
+        links[1] = "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v";
+
         // Create the report
         (uint256 reportHatsId, uint256 poolId,) = ies.createReport(
             projectHatId,
             contributors,
             "ipfs://QmReport",
             "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v",
+            "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v",
+            links,
             alice,
             roleData
         );

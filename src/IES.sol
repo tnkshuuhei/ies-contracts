@@ -95,7 +95,9 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     event EvaluationCreated(uint256 indexed id, address indexed evaluation);
     event TreasuryUpdated(address treasury);
     event PoolFunded(uint256 indexed id, uint256 amount);
-    event ProfileCreated(bytes32 indexed id, uint256 hatId, string name, string metadata, address owner);
+    event ProfileCreated(
+        bytes32 indexed id, uint256 hatId, string name, string metadata, address owner, string imageURL
+    );
     event RoleCreated(
         uint256 indexed projectHatid,
         uint256 reportHatId,
@@ -149,7 +151,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         // TODO: define proper schema
         bytes32 _schemaUID = ISchemaRegistry(_schemaRegistry).register(
-            "bytes32 profileId, address[] contributors, string proposal, string metadataUID, address proposer",
+            "bytes32 profileId, address[] contributors, string description, string metadataUID, address proposer, string[] links",
             ISchemaResolver(address(resolver)),
             true
         );
@@ -220,7 +222,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         profilesById[hatId] = profile;
 
         // Emit the event that the profile was created
-        emit ProfileCreated(profileId, hatId, _name, _metadata, _owner);
+        emit ProfileCreated(profileId, hatId, _name, _metadata, _owner, _imageURL);
 
         // Return the profile ID
         return (profileId, hatId);
@@ -231,6 +233,8 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
      * @param _hatId // the hatId of the project that the report is created for
      * @param _contributors // the addresses of the contributors
      * @param _description // the description of the report
+     * @param _reportMetadata // the metadata of the report
+     * @param _links // the links of evidence for the report
      * @param _imageURL // the image URL for hats that represent the report
      * @param _proposor // the address of the proposor
      */
@@ -239,6 +243,8 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         address[] calldata _contributors,
         string memory _description,
         string memory _imageURL,
+        string memory _reportMetadata,
+        string[] memory _links,
         address _proposor, // the address of the proposor
         bytes[] memory _roleData
     )
@@ -304,12 +310,13 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         // calldata2: attest the proposal with the contributors
         _data[1] = abi.encodeWithSignature(
-            "attest(bytes32,address[],string,string,address)",
-            pool.profileId,
-            _contributors,
-            _description, // TODO: use the cid
-            pool.metadata,
-            _proposor
+            "attest(bytes32,address[],string,string, address, string[])",
+            pool.profileId, //profileId
+            _contributors, // contributors
+            _reportMetadata, // TODO: use the cid
+            _reportMetadata, // metadataUID
+            _proposor,
+            _links
         );
         // target2: address(this)
         _target[1] = address(this);
@@ -358,13 +365,15 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     function attest(
         bytes32 profileId,
         address[] memory contributors,
-        string memory proposal,
-        string memory metadataUID
+        string memory description,
+        string memory metadataUID,
+        address proposer,
+        string[] memory links
     )
         external
         returns (bytes32 attestationUID)
     {
-        attestationUID = _attest(profileId, contributors, proposal, metadataUID, msg.sender);
+        attestationUID = _attest(profileId, contributors, description, metadataUID, proposer, links);
     }
 
     function changeMinDeposit(uint256 _minDeposit) external onlyAdmin {
@@ -464,21 +473,22 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     /// @dev create a new attestation
     /// @param profileId The unique identifier of the profile
     /// @param contributors The addresses of the contributors
-    /// @param proposal The proposal of the attestation
+    /// @param description The proposal of the attestation
     /// @param metadataUID The unique identifier of the metadata
     /// @return attestationUID The unique identifier of the attestation
     function _attest(
         bytes32 profileId,
         address[] memory contributors,
-        string memory proposal,
+        string memory description,
         string memory metadataUID,
-        address proposer
+        address proposer,
+        string[] memory links
     )
         internal
         returns (bytes32 attestationUID)
     {
         // "bytes32 profileId, address[] contributors, string proposal, string metadataUID, address proposer"
-        bytes memory data = abi.encode(profileId, contributors, proposal, metadataUID, proposer);
+        bytes memory data = abi.encode(profileId, contributors, description, metadataUID, proposer, links);
         AttestationRequestData memory requestData = AttestationRequestData({
             recipient: proposer,
             expirationTime: 0,
