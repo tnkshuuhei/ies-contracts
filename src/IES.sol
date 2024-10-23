@@ -149,7 +149,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         resolver = new AttesterResolver(IEAS(_eas), address(this));
 
-        // TODO: define proper schema
         bytes32 _schemaUID = ISchemaRegistry(_schemaRegistry).register(
             "bytes32 profileId, address[] contributors, string description, string metadataUID, address proposer, string[] links",
             ISchemaResolver(address(resolver)),
@@ -232,6 +231,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
      * @dev Create a new Impact Report
      * @param _hatId // the hatId of the project that the report is created for
      * @param _contributors // the addresses of the contributors
+     * @param _title // the title of the report
      * @param _description // the description of the report
      * @param _reportMetadata // the metadata of the report
      * @param _links // the links of evidence for the report
@@ -241,6 +241,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     function createReport(
         uint256 _hatId,
         address[] calldata _contributors,
+        string memory _title,
         string memory _description,
         string memory _imageURL,
         string memory _reportMetadata,
@@ -302,8 +303,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         // calldata1: send back the token from governor contract to the owner address
         // TODO: governor of address(this), if proposal hasn't passed, the token will be locked to the target address...
-        _data[0] =
-            abi.encodeWithSignature("transferFrom(address,address,uint256)", address(governor), _proposor, MIN_DEPOSIT);
+        _data[0] = abi.encodeWithSignature("transfer(address,uint256)", msg.sender, MIN_DEPOSIT);
         // target1: token address
         _target[0] = address(token);
         _values[0] = 0;
@@ -313,7 +313,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             "attest(bytes32,address[],string,string, address, string[])",
             pool.profileId, //profileId
             _contributors, // contributors
-            _reportMetadata, // TODO: use the cid
+            _description, // description
             _reportMetadata, // metadataUID
             _proposor,
             _links
@@ -330,7 +330,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         }
 
         // call the proposeImpactReport() on Evaluation
-        proposalId = evaluation.proposeImpactReport(_contributors, _target, _values, _data, _description);
+        proposalId = evaluation.proposeImpactReport(_contributors, _target, _values, _data, _title, _description);
 
         require(_roleData.length > 0, INVALID());
 
