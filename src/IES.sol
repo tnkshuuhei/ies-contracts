@@ -83,7 +83,13 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     mapping(uint256 => uint256) public projectReportCount;
 
     // Events
-    event ImpactReportCreated(uint256 indexed projectHatId, uint256 indexed reportHatId, uint256 indexed proposalId);
+    event ImpactReportCreated(
+        uint256 indexed projectHatId,
+        uint256 indexed reportHatId,
+        uint256 indexed proposalId,
+        address proposer,
+        string reportMetadata
+    );
     event Initialized(
         address indexed owner,
         address indexed treasury,
@@ -358,7 +364,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             emit RoleCreated(_hatId, reportHatsId, roleHatId, role.wearers, role.metadata, role.imageURL);
         }
 
-        emit ImpactReportCreated(_hatId, reportHatsId, proposalId);
+        emit ImpactReportCreated(_hatId, reportHatsId, proposalId, _proposor, _reportMetadata);
         return (reportHatsId, evaluation.getPoolId(), proposalId);
     }
 
