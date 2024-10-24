@@ -151,7 +151,8 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         splitsToken = IERC1155(_splitsToken);
         eas = IEAS(_eas);
         hats = IHats(_hats);
-        MIN_DEPOSIT = 1000;
+
+        MIN_DEPOSIT = 1000 * 10 ** 18;
 
         resolver = new AttesterResolver(IEAS(_eas), address(this));
 
