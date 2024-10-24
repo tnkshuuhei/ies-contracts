@@ -181,6 +181,7 @@ contract IESTest is BaseTest {
             projectHatId,
             contributors,
             "ipfs://QmReport",
+            "ipfs://QmReport",
             "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v",
             "ipfs://QmYRmop52xSAmUC5J5squPrkyu6HtGwQc6yqQNze5q5S8v",
             links,

@@ -46,12 +46,14 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
     ///@param targets array of the target contract addresses
     ///@param values array of values to be handled by the proposal
     ///@param calldatas array of calldatas to be handled by the proposal
+    ///@param title string title of the proposal
     ///@param description string description of the proposal
     function proposeImpactReport(
         address[] calldata _contributors,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
+        string memory title,
         string memory description
     )
         external
@@ -60,10 +62,9 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
     {
         // create proposal on Governor contract
         proposalId = IGovernor(governor).propose(
-            targets, values, calldatas, string(abi.encodePacked("[Impact Report]", description))
+            targets, values, calldatas, string(abi.encodePacked("# [Impact Report]", title, " ", description))
         );
 
-        // TODO: emit event
         emit ImpactReportCreated(_contributors, proposalId);
         return proposalId;
     }
