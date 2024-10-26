@@ -242,7 +242,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
      * @param _reportMetadata // the metadata of the report
      * @param _links // the links of evidence for the report
      * @param _imageURL // the image URL for hats that represent the report
-     * @param _proposor // the address of the proposor
+     * @param _proposer // the address of the proposor
      */
     function createReport(
         uint256 _hatId,
@@ -252,16 +252,16 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         string memory _imageURL,
         string memory _reportMetadata,
         string[] memory _links,
-        address _proposor, // the address of the proposor
+        address _proposer, // the address of the proposor
         bytes[] memory _roleData
     )
         external
         returns (uint256 reportHatsId, uint256 poolId, uint256 proposalId)
     {
         require(
-            _proposor == msg.sender && _proposor == profilesById[_hatId].owner && _contributors.length > 0, INVALID()
+            _proposer == msg.sender && _proposer == profilesById[_hatId].owner && _contributors.length > 0, INVALID()
         );
-        require(_proposor != address(0), ZERO_ADDRESS());
+        require(_proposer != address(0), ZERO_ADDRESS());
 
         Profile memory profile = profilesById[_hatId];
 
@@ -280,7 +280,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         // create new pool for the report
         (, Evaluation evaluation) =
-            _createEvaluationWithPool(profile.id, reportHatsId, MIN_DEPOSIT, profile.metadata, _proposor, _contributors);
+            _createEvaluationWithPool(profile.id, reportHatsId, MIN_DEPOSIT, profile.metadata, _proposer, _contributors);
 
         // Check If the evaluation contract is already initialized
         require(evaluation.initialized() == true, INVALID());
@@ -313,15 +313,10 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         _values[0] = 0;
 
         // calldata2: attest the proposal with the contributors
-        _data[1] = abi.encodeWithSignature(
-            "attest(bytes32,address[],string,string, address, string[])",
-            pool.profileId, //profileId
-            _contributors, // contributors
-            _description, // description
-            _reportMetadata, // metadataUID
-            _proposor,
-            _links
+        _data[1] = abi.encodeWithSelector(
+            IES.attest.selector, pool.profileId, _contributors, _description, _reportMetadata, _proposer, _links
         );
+
         // target2: address(this)
         _target[1] = address(this);
         _values[1] = 0;
@@ -362,7 +357,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             emit RoleCreated(_hatId, reportHatsId, roleHatId, role.wearers, role.metadata, role.imageURL);
         }
 
-        emit ImpactReportCreated(_hatId, reportHatsId, proposalId, _proposor, _reportMetadata);
+        emit ImpactReportCreated(_hatId, reportHatsId, proposalId, _proposer, _reportMetadata);
         return (reportHatsId, evaluation.getPoolId(), proposalId);
     }
 
