@@ -20,7 +20,6 @@ import { Evaluation } from "./Evaluation.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { AttesterResolver } from "./eas/AttesterResolver.sol";
 
-// Comprehensive Evaluation Protocol
 contract IES is AccessControl, Errors, IERC1155Receiver {
     // Constants
     string private constant DEFAULT_TOP_HAT_NAME = "IES";
@@ -294,7 +293,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         EvaluationPool memory pool = evaluations[evaluation.getPoolId()];
 
         // check if the msg.sender is the owner of the evaluation contract
-        // TODO: msg.sender might be a address(this)
         evaluation.checkOwner(msg.sender);
 
         // transfer the amount to the evaluation contract
@@ -309,7 +307,6 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         uint256[] memory _values = new uint256[](2 + _contributors.length);
 
         // calldata1: send back the token from governor contract to the owner address
-        // TODO: governor of address(this), if proposal hasn't passed, the token will be locked to the target address...
         _data[0] = abi.encodeWithSignature("transfer(address,uint256)", msg.sender, MIN_DEPOSIT);
         // target1: token address
         _target[0] = address(token);
@@ -331,9 +328,9 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         // mint 1 split token to each contributor
         for (uint256 i = 0; i < _contributors.length; i++) {
-            _data[i + 2] = abi.encodeWithSignature("mint(address,uint256,uint256,bytes)", _contributors[i], 0, 1, "");
-            _target[i + 2] = address(splitsToken);
-            _values[i + 2] = 0;
+            _data[2 + i] = abi.encodeWithSignature("mint(address,uint256,bytes)", _contributors[i], 1, new bytes(0));
+            _target[2 + i] = address(splitsToken);
+            _values[2 + i] = 0;
         }
 
         // call the proposeImpactReport() on Evaluation

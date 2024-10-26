@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.25;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/governance/IGovernor.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -11,6 +12,7 @@ import { console } from "forge-std/console.sol";
 import "./libraries/Errors.sol";
 import { IES } from "./IES.sol";
 
+// check if the proposal has executed when owner withdraws bond
 contract Evaluation is AccessControl, Errors, IERC1155Receiver {
     IES public ies;
 
@@ -39,6 +41,11 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
 
     modifier onlyIES() {
         require(_checkIES() == true, UNAUTHORIZED());
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(_checkOwner(msg.sender) == true, UNAUTHORIZED());
         _;
     }
 
@@ -102,7 +109,7 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
     }
 
     function _checkOwner(address caller) internal view returns (bool) {
-        require(hasRole(DEFAULT_ADMIN_ROLE, caller), UNAUTHORIZED());
+        require(hasRole(DEFAULT_ADMIN_ROLE, caller) && caller == owner, UNAUTHORIZED());
         return true;
     }
 

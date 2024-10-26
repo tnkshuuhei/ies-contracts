@@ -5,6 +5,7 @@ import { BaseTest } from "./Base.t.sol";
 import { console2 } from "forge-std/console2.sol";
 
 import { IVotes } from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -102,10 +103,10 @@ contract IESTest is BaseTest {
         governor = new IESGovernor(IVotes(address(voteToken)), delay, period);
 
         // Mint voteToken to owner, alice, bob, charlie
-        __mintVoteToken(owner, 1_000_000);
-        __mintVoteToken(alice, 1_000_000);
-        __mintVoteToken(bob, 1_000_000);
-        __mintVoteToken(charlie, 1_000_000);
+        __mintVoteToken(owner, 1000 * 10 ** 18);
+        __mintVoteToken(alice, 1000 * 10 ** 18);
+        __mintVoteToken(bob, 1000 * 10 ** 18);
+        __mintVoteToken(charlie, 1000 * 10 ** 18);
 
         // Deploy IES contract
         ies = new IES(
@@ -131,7 +132,7 @@ contract IESTest is BaseTest {
         assertEq(address(ies.eas()), address(eas), "EAS address should be set correctly");
         assertEq(address(ies.hats()), address(hats), "Hats address should be set correctly");
         assertEq(address(ies.splitsToken()), address(lsToken), "SplitsToken address should be set correctly");
-        assertEq(ies.MIN_DEPOSIT(), 1000, "MIN_DEPOSIT should be set to 1000");
+        assertEq(ies.MIN_DEPOSIT(), 1000 * 10 ** 18, "Min deposit should be 1000");
     }
 
     function testRegisterProject() external {
@@ -156,7 +157,7 @@ contract IESTest is BaseTest {
 
     function testCreateReport() external {
         // alice should approve to spend voteToken
-        __approveVoteToken(alice, address(ies), 1000);
+        __approveVoteToken(alice, address(ies), 1000 * 10 ** 18);
 
         // alice create the project
         (, uint256 projectHatId) =
@@ -191,8 +192,15 @@ contract IESTest is BaseTest {
 
         (string memory details, uint32 maxSupply, uint32 supply,,, string memory imageURI,,,) =
             hats.viewHat(reportHatsId);
+        (,,, address token, uint256 amount,) = ies.evaluations(0);
 
+        // check evaluation
         assertEq(poolId, 0, "Pool ID should be 0");
+        assertEq(token, address(voteToken), "Token should be voteToken");
+        assertEq(amount, 1000 * 10 ** 18, "Amount should be 1000");
+        assertEq(
+            IERC20(token).balanceOf(address(governor)), 1000 * 10 ** 18, "Governor contract should have 1000 voteToken"
+        );
 
         // check hats
         assertEq(details, "[Impact Report] #1", "Details should match");
