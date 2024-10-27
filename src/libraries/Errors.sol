@@ -76,4 +76,8 @@ contract Errors {
 
     /// @notice Thrown when attempting to interact with an uninitialized pool
     error POOL_NOT_INITIALIZED(uint256 poolId);
+
+    error NOT_GOVERNOR();
+
+		error INVALID_ADMIN();
 }

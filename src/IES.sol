@@ -2,6 +2,7 @@
 pragma solidity >=0.8.25;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -21,7 +22,9 @@ import { Errors } from "./libraries/Errors.sol";
 import { AttesterResolver } from "./eas/AttesterResolver.sol";
 
 contract IES is AccessControl, Errors, IERC1155Receiver {
+    using SafeERC20 for ERC20;
     // Constants
+
     string private constant DEFAULT_TOP_HAT_NAME = "IES";
     string private constant REPORT_HAT_PREFIX = "[Impact Report] #";
 
@@ -305,7 +308,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         ERC20 token = ERC20(pool.token);
 
         // need approval from the msg.sender to this contract
-        require(token.transferFrom(msg.sender, address(governor), MIN_DEPOSIT), INSUFFICIENT_FUNDS());
+        token.safeTransferFrom(msg.sender, address(governor), MIN_DEPOSIT);
 
         // create array of calldatas, targets, and values
         bytes[] memory _data = new bytes[](2 + _contributors.length);
@@ -512,11 +515,11 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     }
 
     function _checkAdmin() internal view {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IES: caller is not an admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), INVALID_ADMIN());
     }
 
     function _checkGovernor() internal view {
-        require(msg.sender == address(governor), "IES: caller is not the governor");
+        require(msg.sender == address(governor), NOT_GOVERNOR());
     }
 
     function _generateProfileId(
