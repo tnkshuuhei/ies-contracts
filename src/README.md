@@ -36,15 +36,15 @@
 <tbody>
     <tr>
         <td>IES.sol</td>
-        <td>0x1dD477023Da9C44153f26089c6e5820fbaAd13Af</td>
+        <td>0x9ff98Fd9711e1d5A065146079FB04db3b3f29789</td>
     </tr>
     <tr>
         <td>VotingIESToken.sol</td>
-        <td>0x50277b77F905Ef88521cf6a7f669cE9d4a7028D4</td>
+        <td>0xE15f76172c3a53611E810FCc700E2c85bf414f49</td>
     </tr>
     <tr>
         <td>IESGovernor.sol</td>
-        <td>0xAB796A4Bd5cCd764a54BA0bD203A68eA1cd06b97</td>
+        <td>0x30F951B259A1ad1C104f602E4450c240a4d299A2</td>
     </tr>
     <tr>
         <td>LiquidSplits1155.sol</td>
