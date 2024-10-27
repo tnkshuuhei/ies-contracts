@@ -119,6 +119,11 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         _;
     }
 
+    modifier onlyGovernor() {
+        _checkGovernor();
+        _;
+    }
+
     /**
      * @dev Initializes the CEP contract
      * @param _owner the owner of the contract
@@ -284,7 +289,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             _createEvaluationWithPool(profile.id, reportHatsId, MIN_DEPOSIT, profile.metadata, _proposer, _contributors);
 
         // Check If the evaluation contract is already initialized
-        require(evaluation.initialized() == true, POOL_NOT_INITIALIXED(evaluation.getPoolId()));
+        require(evaluation.initialized() == true, POOL_NOT_INITIALIZED(evaluation.getPoolId()));
 
         evaluationAddrByHatId[reportHatsId] = address(evaluation);
 
@@ -337,9 +342,9 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         // create roles for the report
         for (uint256 i = 0; i < _roleData.length; i++) {
             HatsRole memory role = abi.decode(_roleData[i], (HatsRole));
-            require(role.wearers.length > 0, INVALID_ROLE_DATA());
-            require(bytes(role.metadata).length > 0, INVALID_ROLE_DATA());
-            require(bytes(role.imageURL).length > 0, INVALID_ROLE_DATA());
+            require(role.wearers.length > 0, EMPTY_ROLE_WEARERS());
+            require(bytes(role.metadata).length > 0, EMPTY_ROLE_METADATA());
+            require(bytes(role.imageURL).length > 0, EMPTY_ROLE_IMAGE_URL());
 
             uint256 roleHatId = hats.createHat(
                 reportHatsId,
@@ -371,9 +376,10 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         string[] memory links
     )
         external
-        returns (bytes32 attestationUID)
+        onlyGovernor
+        returns (bytes32)
     {
-        attestationUID = _attest(profileId, contributors, description, metadataUID, proposer, links);
+        return _attest(profileId, contributors, description, metadataUID, proposer, links);
     }
 
     function changeMinDeposit(uint256 _minDeposit) external onlyAdmin {
@@ -507,6 +513,10 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
     function _checkAdmin() internal view {
         require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IES: caller is not an admin");
+    }
+
+    function _checkGovernor() internal view {
+        require(msg.sender == address(governor), "IES: caller is not the governor");
     }
 
     function _generateProfileId(

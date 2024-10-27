@@ -55,18 +55,25 @@ contract Errors {
     /// @notice Thrown when role data is invalid
     error INVALID_ROLE_DATA();
 
+    error EMPTY_ROLE_WEARERS();
+
+    error EMPTY_ROLE_METADATA();
+
+    error EMPTY_ROLE_IMAGE_URL();
+
     /// ======================
     /// === Evaluation ======
     /// ======================
 
-    /// @notice Thrown when evaluation initialization fails
+    /// @notice Thrown when evaluation contract initialization fails due to invalid parameters or state
     error EVALUATION_INIT_FAILED();
 
-    /// @notice Thrown when pool ID mismatch
+    /// @notice Thrown when the provided pool ID doesn't match the expected value
     error POOL_ID_MISMATCH();
 
-    /// @notice Thrown when evaluation contract mismatch
+    /// @notice Thrown when the evaluation contract address doesn't match the expected value
     error EVALUATION_CONTRACT_MISMATCH();
 
-    error POOL_NOT_INITIALIXED(uint256 poolId);
+    /// @notice Thrown when attempting to interact with an uninitialized pool
+    error POOL_NOT_INITIALIZED(uint256 poolId);
 }
