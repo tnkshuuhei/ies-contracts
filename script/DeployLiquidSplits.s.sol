@@ -7,8 +7,8 @@ import { BaseScript } from "./Base.s.sol";
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 
 contract DeployLiquidSplits1155 is BaseScript {
-    address[] public accounts = [0xc3593524E2744E547f013E17E6b0776Bc27Fc614, 0x06aa005386F53Ba7b980c61e0D067CaBc7602a62];
-    uint32[] public initialAllocation = [50, 50];
+    address[] public accounts = [0xc3593524E2744E547f013E17E6b0776Bc27Fc614, 0x63b1EfC5602C0023BBb373F2350Cf34c2E5F8669];
+    uint32[] public initialAllocation = [1, 1];
 
     function run() public broadcast {
         new LiquidSplits1155(
