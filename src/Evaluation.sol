@@ -67,10 +67,21 @@ contract Evaluation is AccessControl, Errors, IERC1155Receiver {
         onlyIES
         returns (uint256 proposalId)
     {
-        // create proposal on Governor contract
-        proposalId = IGovernor(governor).propose(
-            targets, values, calldatas, string(abi.encodePacked("# [Impact Report]", title, " ", description))
+        // Format proposal description following the standard:
+        // 1. First line is title (with [Impact Report] prefix)
+        // 2. Blank line separator
+        // 3. Description body
+        string memory formattedDescription = string(
+            abi.encodePacked(
+                "# [Impact Report] ", // Title prefix
+                title, // User provided title
+                "\n\n", // Two newlines to separate title from body
+                description // Description body
+            )
         );
+
+        // Create proposal on Governor contract
+        proposalId = IGovernor(governor).propose(targets, values, calldatas, formattedDescription);
 
         emit ImpactReportCreated(_contributors, proposalId);
         return proposalId;
