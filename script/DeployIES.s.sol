@@ -15,7 +15,7 @@ contract DeployIES is BaseScript {
     address public treasury = 0x6630135B16769bf599947a5113F617be4feC781b;
     address public votingToken;
     address public governor;
-    address public ls1155 = 0x8b16442143B38D8a7b0d116c6860a241Abf98788;
+    address public ls1155 = 0xd492DF1E59a3e14C986E3b5C00F8f2762AbE0BEF;
     address public eas = 0xC2679fBD37d54388Ce493F1DB75320D236e1815e;
     address public schemaRegistry = 0x0a7E2Ff54e76B8E6659aedc9103FB21c038050D0;
     address public hats = 0x3bc1A0Ad72417f2d411118085256fC53CBdDd137;

@@ -2,6 +2,7 @@
 pragma solidity >=0.8.25;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC1155 } from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { IERC1155Receiver } from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
@@ -21,7 +22,9 @@ import { Errors } from "./libraries/Errors.sol";
 import { AttesterResolver } from "./eas/AttesterResolver.sol";
 
 contract IES is AccessControl, Errors, IERC1155Receiver {
+    using SafeERC20 for ERC20;
     // Constants
+
     string private constant DEFAULT_TOP_HAT_NAME = "IES";
     string private constant REPORT_HAT_PREFIX = "[Impact Report] #";
 
@@ -119,6 +122,11 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         _;
     }
 
+    modifier onlyGovernor() {
+        _checkGovernor();
+        _;
+    }
+
     /**
      * @dev Initializes the CEP contract
      * @param _owner the owner of the contract
@@ -194,7 +202,8 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     {
         // check
         require(_owner != address(0), ZERO_ADDRESS());
-        require(_owner == msg.sender, INVALID());
+        require(_owner == msg.sender, UNAUTHORIZED());
+        require((bytes(_name).length != 0 || bytes(_metadata).length != 0), INVALID_INPUT());
 
         // create a new hat for the project, that represents the project itself
         hatId = hats.createHat(
@@ -258,10 +267,10 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         external
         returns (uint256 reportHatsId, uint256 poolId, uint256 proposalId)
     {
-        require(
-            _proposer == msg.sender && _proposer == profilesById[_hatId].owner && _contributors.length > 0, INVALID()
-        );
         require(_proposer != address(0), ZERO_ADDRESS());
+        require((_proposer == msg.sender), UNAUTHORIZED());
+        require((_contributors.length > 0), NO_CONTRIBUTORS());
+        require((_roleData.length > 0), INVALID_ROLE_DATA());
 
         Profile memory profile = profilesById[_hatId];
 
@@ -283,7 +292,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
             _createEvaluationWithPool(profile.id, reportHatsId, MIN_DEPOSIT, profile.metadata, _proposer, _contributors);
 
         // Check If the evaluation contract is already initialized
-        require(evaluation.initialized() == true, INVALID());
+        require(evaluation.initialized() == true, POOL_NOT_INITIALIZED(evaluation.getPoolId()));
 
         evaluationAddrByHatId[reportHatsId] = address(evaluation);
 
@@ -299,7 +308,7 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         ERC20 token = ERC20(pool.token);
 
         // need approval from the msg.sender to this contract
-        require(token.transferFrom(msg.sender, address(governor), MIN_DEPOSIT), NOT_ENOUGH_FUNDS());
+        token.safeTransferFrom(msg.sender, address(governor), MIN_DEPOSIT);
 
         // create array of calldatas, targets, and values
         bytes[] memory _data = new bytes[](2 + _contributors.length);
@@ -331,14 +340,14 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         // call the proposeImpactReport() on Evaluation
         proposalId = evaluation.proposeImpactReport(_contributors, _target, _values, _data, _title, _description);
 
-        require(_roleData.length > 0, INVALID());
+        require(_roleData.length > 0, INVALID_ROLE_DATA());
 
         // create roles for the report
         for (uint256 i = 0; i < _roleData.length; i++) {
             HatsRole memory role = abi.decode(_roleData[i], (HatsRole));
-            require(role.wearers.length > 0, INVALID());
-            require(bytes(role.metadata).length > 0, INVALID());
-            require(bytes(role.imageURL).length > 0, INVALID());
+            require(role.wearers.length > 0, EMPTY_ROLE_WEARERS());
+            require(bytes(role.metadata).length > 0, EMPTY_ROLE_METADATA());
+            require(bytes(role.imageURL).length > 0, EMPTY_ROLE_IMAGE_URL());
 
             uint256 roleHatId = hats.createHat(
                 reportHatsId,
@@ -370,9 +379,10 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
         string[] memory links
     )
         external
-        returns (bytes32 attestationUID)
+        onlyGovernor
+        returns (bytes32)
     {
-        attestationUID = _attest(profileId, contributors, description, metadataUID, proposer, links);
+        return _attest(profileId, contributors, description, metadataUID, proposer, links);
     }
 
     function changeMinDeposit(uint256 _minDeposit) external onlyAdmin {
@@ -435,8 +445,8 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
 
         evaluation.initialize(poolId);
 
-        require(evaluation.getPoolId() == poolId, MISMATCH());
-        require(address(evaluation.getIES()) == address(this), MISMATCH());
+        require(evaluation.getPoolId() == poolId, POOL_ID_MISMATCH());
+        require(address(evaluation.getIES()) == address(this), EVALUATION_CONTRACT_MISMATCH());
 
         for (uint256 i = 0; i < _contributors.length; i++) {
             address contributor = _contributors[i];
@@ -505,7 +515,11 @@ contract IES is AccessControl, Errors, IERC1155Receiver {
     }
 
     function _checkAdmin() internal view {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "IES: caller is not an admin");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), INVALID_ADMIN());
+    }
+
+    function _checkGovernor() internal view {
+        require(msg.sender == address(governor), NOT_GOVERNOR());
     }
 
     function _generateProfileId(
