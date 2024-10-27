@@ -12,7 +12,7 @@ import { BaseScript } from "./Base.s.sol";
 /// @dev See the Solidity Scripting tutorial: https://book.getfoundry.sh/tutorials/solidity-scripting
 contract DeployIES is BaseScript {
     // Sepolia
-    address public treasury = 0x6630135B16769bf599947a5113F617be4feC781b;
+    address public treasury = 0xe2fcB52Bd35C2D7d51e6E49c12207D7197563979;
     address public votingToken;
     address public governor;
     address public ls1155 = 0xd492DF1E59a3e14C986E3b5C00F8f2762AbE0BEF;
