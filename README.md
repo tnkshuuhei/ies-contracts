@@ -98,42 +98,6 @@ c->>v: reward
 ```
 
 ### Hats Tree
-```mermaid
-graph TD;
-    IES-- Register project-->ProjectA;
-    IES-->ProjectB;
-    ProjectA --> Report24Q1
-    ProjectA --> Report24Q2
-    Report24Q1 --> RoleA
-    Report24Q1 --> RoleB
-    RoleA --> alice
-    RoleA --> bob
-    RoleB --> charlie
-```
+<img width="1834" alt="Screenshot 2024-10-27 at 20 29 30" src="https://github.com/user-attachments/assets/99ed9575-1a1f-49c3-b744-66b3c30ee06f">
 
 ![image](https://github.com/user-attachments/assets/72a5dc19-7c45-46f7-8d91-031c0a92f12c)
-
-Projects register with IES
-
-↓
-
-Creation of impact reports
-
-↓
-
-Used in more applications, improving the grant experience
-
-↓
-
-Projects acquire more grants
-
-↓
-
-More projects register with IES
-
-↓
-
-Reports are created for more projects
-
-As the grant experience improves, grant operators can be expected to provide funding to IES.
-This serves as an incentive for evaluators, and more evaluators are expected to participate.
