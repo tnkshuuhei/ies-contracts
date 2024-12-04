@@ -27,14 +27,14 @@
     "lint:sol": "forge fmt --check && bun solhint {script,src,test}/**/*.sol",
     "prettier:check": "prettier --check \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
     "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
-		"test" : "forge test --fork-url sepolia",
-		"test:optimism" : "forge test --fork-url optimism",
+    "test": "forge test --fork-url sepolia",
+    "test:optimism": "forge test --fork-url optimism",
     "test:coverage": "forge coverage",
     "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage",
     "deploy:optimism-governor": "forge script script/DeployIESGovernor.s.sol --rpc-url optimism  --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_OPTIMISTIC_ETHERSCAN --verify",
-		"deploy:sepolia-votingToken" : "forge script script/DeployVotingIESToken.s.sol --rpc-url sepolia --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify",
-		"deploy:sepolia-governor": "forge script script/DeployIESGovernor.s.sol --rpc-url sepolia  --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify",
-		"deploy:sepolia-ls1155" : "forge script script/DeployLiquidSplits.s.sol --rpc-url sepolia --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify",
-		"deploy:sepolia-ies" : "forge script script/DeployIES.s.sol --rpc-url sepolia --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify"
+    "deploy:sepolia-votingToken": "forge script script/DeployVotingIESToken.s.sol --rpc-url sepolia --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify",
+    "deploy:sepolia-governor": "forge script script/DeployIESGovernor.s.sol --rpc-url sepolia  --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify",
+    "deploy:sepolia-ls1155": "forge script script/DeployLiquidSplits.s.sol --rpc-url sepolia --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify",
+    "deploy:sepolia-ies": "forge script script/DeployIES.s.sol --rpc-url sepolia --broadcast --private-key $DEPLOYER_PRIVATE_KEY --etherscan-api-key $API_KEY_ETHERSCAN --verify"
   }
 }
